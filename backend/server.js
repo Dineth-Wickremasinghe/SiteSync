@@ -24,5 +24,10 @@ app.get('/', (req, res) => {
   res.json({ message: 'SiteSync API is running' })
 })
 
+app.use((err, req, res, next) => {
+  console.error('Server error:', err.message)
+  res.status(500).json({ message: err.message })
+})
+
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
