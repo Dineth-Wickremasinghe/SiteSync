@@ -10,14 +10,15 @@ cloudinary.config({
 
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: {
-    folder: 'sitesync',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf']
+  params: async (req, file) => {
+    return {
+      folder: 'sitesync',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'pdf', 'heic', 'heif'],
+      resource_type: 'auto'
+    }
   }
 })
 
 const upload = multer({ storage })
 
 module.exports = upload
-
-
