@@ -16,6 +16,7 @@ const createWorker = async (req, res) => {
 
     res.status(201).json(worker)
   } catch (error) {
+    console.error('Worker create error:', error.message)
     res.status(500).json({ message: error.message })
   }
 }
