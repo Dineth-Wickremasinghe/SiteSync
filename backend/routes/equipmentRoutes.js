@@ -1,6 +1,19 @@
- const express = require('express')
+const express = require('express')
 const router = express.Router()
+const {
+  createEquipment,
+  getEquipment,
+  getEquipmentById,
+  updateEquipment,
+  deleteEquipment
+} = require('../controllers/equipmentController')
+const { protect } = require('../middleware/authMiddleware')
+const upload = require('../middleware/uploadMiddleware')
 
-router.get('/test', (req, res) => res.json({ message: 'equipment route working' }))
+router.post('/',      protect, upload.single('equipmentImg'), createEquipment)
+router.get('/',       protect, getEquipment)
+router.get('/:id',    protect, getEquipmentById)
+router.put('/:id',    protect, upload.single('equipmentImg'), updateEquipment)
+router.delete('/:id', protect, deleteEquipment)
 
 module.exports = router
