@@ -18,6 +18,7 @@ const createNotice = async (req, res) => {
   }
 };
 
+
 // GET /api/notices — Get all notices
 const getAllNotices = async (req, res) => {
   try {
