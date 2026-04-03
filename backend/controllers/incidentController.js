@@ -1,4 +1,4 @@
-const Incident = require('../models/incident')
+const Incident = require('../models/Incident')
 
 // @POST /api/incidents
 const createIncident = async (req, res) => {
