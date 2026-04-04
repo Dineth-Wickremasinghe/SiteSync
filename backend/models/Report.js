@@ -7,8 +7,8 @@ const reportSchema = new mongoose.Schema(
       required: true
     },
     reportDate: {
-      type: String,      // stored as YYYY-MM-DD plain string per schema reference
-      required: true
+      type: String,     
+      default: Date.now
     },
     workDone: {
       type: String,
