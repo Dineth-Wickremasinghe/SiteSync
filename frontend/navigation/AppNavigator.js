@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 
 import LoginScreen from '../screens/auth/LoginScreen'
 import RegisterScreen from '../screens/auth/RegisterScreen'
+import IncidentListScreen from '../screens/incidents/IncidentListScreen'
+import IncidentFormScreen from '../screens/incidents/IncidentFormScreen'
 import WorkerListScreen from '../screens/workers/WorkerListScreen'
 import WorkerFormScreen from '../screens/workers/WorkerFormScreen'
 
@@ -24,6 +26,12 @@ export default function AppNavigator() {
           </>
         ) : (
           <>
+            <Stack.Screen name="IncidentList">
+              {props => <IncidentListScreen {...props} token={token} />}
+            </Stack.Screen>
+            <Stack.Screen name="IncidentForm">
+              {props => <IncidentFormScreen {...props} token={token} />}
+            </Stack.Screen>
             <Stack.Screen name="WorkerList">
               {props => <WorkerListScreen {...props} token={token} />}
             </Stack.Screen>
