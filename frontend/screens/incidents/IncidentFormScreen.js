@@ -10,15 +10,12 @@ export default function IncidentFormScreen({ navigation, route }) {
   const { incident, token } = route.params
   const editing = incident !== null
 
+  const [title,       setTitle]       = useState(editing ? incident.title       : '')
   const [description, setDescription] = useState(editing ? incident.description : '')
   const [severity,    setSeverity]    = useState(editing ? incident.severity    : 'Low')
   const [status,      setStatus]      = useState(editing ? incident.status      : 'Open')
-  const [incidentDate, setIncidentDate] = useState(
-    editing ? incident.incidentDate.substring(0, 10) : new Date().toISOString().substring(0, 10)
-  )
-  const [projectId, setProjectId] = useState(editing ? incident.projectId : '')
-  const [photo,     setPhoto]     = useState(null)
-  const [loading,   setLoading]   = useState(false)
+  const [photo,       setPhoto]       = useState(null)
+  const [loading,     setLoading]     = useState(false)
 
   const pickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -32,21 +29,20 @@ export default function IncidentFormScreen({ navigation, route }) {
   }
 
   const handleSave = async () => {
-    if (!description || !incidentDate || !projectId) {
+    if (!title || !description) {
       Alert.alert('Error', 'Please fill in all fields')
       return
     }
     try {
       setLoading(true)
       const formData = new FormData()
-      formData.append('description',  description)
-      formData.append('severity',     severity)
-      formData.append('status',       status)
-      formData.append('incidentDate', incidentDate)
-      formData.append('projectId',    projectId)
+      formData.append('title',       title)
+      formData.append('description', description)
+      formData.append('severity',    severity)
+      formData.append('status',      status)
 
       if (photo) {
-        formData.append('incidentPhoto', {
+        formData.append('incidentImg', {
           uri:  photo.uri,
           type: 'image/jpeg',
           name: 'incident.jpg'
@@ -70,6 +66,8 @@ export default function IncidentFormScreen({ navigation, route }) {
       navigation.goBack()
     } catch (error) {
       console.log('Save error:', error)
+      console.log('Error response:', error.response?.data)
+      console.log('Error message:', error.message)
       Alert.alert('Error', error.response?.data?.message || error.message || 'Failed to save incident')
     } finally {
       setLoading(false)
@@ -80,20 +78,12 @@ export default function IncidentFormScreen({ navigation, route }) {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>{editing ? 'Edit Incident' : 'Report Incident'}</Text>
 
-      <Text style={styles.label}>Project ID</Text>
+      <Text style={styles.label}>Title</Text>
       <TextInput
         style={styles.input}
-        value={projectId}
-        onChangeText={setProjectId}
-        placeholder="Enter project ID"
-      />
-
-      <Text style={styles.label}>Incident Date</Text>
-      <TextInput
-        style={styles.input}
-        value={incidentDate}
-        onChangeText={setIncidentDate}
-        placeholder="YYYY-MM-DD"
+        value={title}
+        onChangeText={setTitle}
+        placeholder="e.g. Worker injury on site"
       />
 
       <Text style={styles.label}>Description</Text>
@@ -108,7 +98,7 @@ export default function IncidentFormScreen({ navigation, route }) {
 
       <Text style={styles.label}>Severity</Text>
       <View style={styles.optionRow}>
-        {['Low', 'Medium', 'High', 'Critical'].map(s => (
+        {['Low', 'Medium', 'High'].map(s => (
           <TouchableOpacity
             key={s}
             style={[styles.option, severity === s && styles.optionActive]}
@@ -121,7 +111,7 @@ export default function IncidentFormScreen({ navigation, route }) {
 
       <Text style={styles.label}>Status</Text>
       <View style={styles.optionRow}>
-        {['Open', 'In Progress', 'Resolved'].map(s => (
+        {['Open', 'Resolved'].map(s => (
           <TouchableOpacity
             key={s}
             style={[styles.option, status === s && styles.optionActive]}
@@ -135,7 +125,7 @@ export default function IncidentFormScreen({ navigation, route }) {
       <Text style={styles.label}>Incident Photo</Text>
       <TouchableOpacity style={styles.uploadBtn} onPress={pickPhoto}>
         <Text style={styles.uploadBtnText}>
-          {photo ? 'Photo selected ✓' : '+ Select incident photo'}
+          {photo ? 'Photo selected' : '+ Select incident photo'}
         </Text>
       </TouchableOpacity>
       {photo && (

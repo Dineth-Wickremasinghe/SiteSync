@@ -8,7 +8,7 @@ import api from '../../services/api'
 
 export default function IncidentListScreen({ navigation, token }) {
   const [incidents, setIncidents] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading,   setLoading]   = useState(true)
 
   const fetchIncidents = async () => {
     try {
@@ -51,10 +51,9 @@ export default function IncidentListScreen({ navigation, token }) {
 
   const getSeverityStyle = (severity) => {
     switch (severity) {
-      case 'Critical': return { bg: '#FDEDEC', text: '#922B21' }
-      case 'High':     return { bg: '#FDEBD0', text: '#935116' }
-      case 'Medium':   return { bg: '#FEF9E7', text: '#9A7D0A' }
-      default:         return { bg: '#EAF3DE', text: '#3B6D11' }
+      case 'High':   return { bg: '#FDEBD0', text: '#935116' }
+      case 'Medium': return { bg: '#FEF9E7', text: '#9A7D0A' }
+      default:       return { bg: '#EAF3DE', text: '#3B6D11' }
     }
   }
 
@@ -63,26 +62,24 @@ export default function IncidentListScreen({ navigation, token }) {
     return (
       <View style={styles.card}>
         <View style={styles.cardTop}>
-          {item.incidentPhotoUrl ? (
-            <Image source={{ uri: item.incidentPhotoUrl }} style={styles.photo} />
+          {item.incidentImg ? (
+            <Image source={{ uri: item.incidentImg }} style={styles.photo} />
           ) : (
             <View style={styles.photoPlaceholder}>
               <Text style={styles.photoPlaceholderText}>⚠️</Text>
             </View>
           )}
           <View style={styles.cardInfo}>
-            <Text style={styles.name}>{item.description.substring(0, 40)}...</Text>
-            <Text style={styles.sub}>
-              {new Date(item.incidentDate).toDateString()}
-            </Text>
+            <Text style={styles.name}>{item.title}</Text>
+            <Text style={styles.sub} numberOfLines={2}>{item.description}</Text>
             <View style={styles.badgeRow}>
               <View style={[styles.badge, { backgroundColor: severityStyle.bg }]}>
                 <Text style={[styles.badgeText, { color: severityStyle.text }]}>
                   {item.severity}
                 </Text>
               </View>
-              <View style={[styles.badge, { backgroundColor: '#EAF3DE' }]}>
-                <Text style={[styles.badgeText, { color: '#3B6D11' }]}>
+              <View style={[styles.badge, { backgroundColor: item.status === 'Resolved' ? '#EAF3DE' : '#FDEDEC' }]}>
+                <Text style={[styles.badgeText, { color: item.status === 'Resolved' ? '#3B6D11' : '#922B21' }]}>
                   {item.status}
                 </Text>
               </View>
@@ -126,7 +123,7 @@ export default function IncidentListScreen({ navigation, token }) {
 
       {incidents.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyText}>No incidents found. Report one!</Text>
+          <Text style={styles.emptyText}>No incidents reported yet.</Text>
         </View>
       ) : (
         <FlatList
