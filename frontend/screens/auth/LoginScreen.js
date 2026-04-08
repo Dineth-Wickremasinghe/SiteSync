@@ -22,6 +22,7 @@ export default function LoginScreen({ navigation, setToken }) {
     const res = await api.post('/auth/login', { email, password })
     console.log('Login response:', res.data)
     setToken(res.data.token)
+    api.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`
   } catch (error) {
     console.log('Full error:', error)
     console.log('Error response:', error.response)
