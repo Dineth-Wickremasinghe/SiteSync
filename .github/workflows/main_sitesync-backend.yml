@@ -48,4 +48,7 @@ jobs:
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
-        w
+        with:
+          app-name: 'sitesync-backend'
+          slot-name: 'Production'
+          package: .
