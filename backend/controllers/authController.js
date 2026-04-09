@@ -92,6 +92,15 @@ const updateProfile = async (req, res) => {
     user.email = req.body.email || user.email
     if (req.file) user.profileImage = req.file.path
 
+    // Handle password change if provided
+    if (req.body.currentPassword && req.body.newPassword) {
+      const isMatch = await bcrypt.compare(req.body.currentPassword, user.password)
+      if (!isMatch) return res.status(400).json({ message: 'Current password is incorrect' })
+
+      const salt = await bcrypt.genSalt(10)
+      user.password = await bcrypt.hash(req.body.newPassword, salt)
+    }
+
     await user.save()
 
     res.json({
@@ -107,4 +116,14 @@ const updateProfile = async (req, res) => {
   }
 }
 
-module.exports = { registerUser, loginUser, getProfile, updateProfile }
+// @POST /api/auth/logout
+const logoutUser = async (req, res) => {
+  try {
+    res.status(200).json({ message: 'Logged out successfully' })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+
+module.exports = { registerUser, loginUser, logoutUser, getProfile, updateProfile }
