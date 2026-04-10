@@ -1,335 +1,182 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react'
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Image,
-  Alert,
-  ScrollView,
-  ActivityIndicator,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import { API_URL } from '../../config';
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, Alert, ActivityIndicator, ScrollView, Image
+} from 'react-native'
+import * as ImagePicker from 'expo-image-picker'
+import api from '../../services/api'
 
-const CATEGORIES = ['Safety', 'Schedule', 'General'];
+const CATEGORIES = ['Safety', 'Schedule', 'General']
 
 const CATEGORY_ACCENT = {
-  Safety: '#D7302D',
+  Safety:   '#D7302D',
   Schedule: '#1D4ED8',
-  General: '#15803D',
-};
+  General:  '#15803D',
+}
 
-const FormLabel = ({ label, required }) => (
-  <Text style={styles.label}>
-    {label}
-    {required && <Text style={styles.required}> *</Text>}
-  </Text>
-);
+export default function NoticeFormScreen({ navigation, route }) {
+  const { notice, token } = route.params
+  const editing = notice !== null
 
-const NoticeFormScreen = ({ navigation, route, token: propToken }) => {
-  const existingNotice = route.params?.notice;
-  const isEditing = !!existingNotice;
+  const [title,    setTitle]    = useState(editing ? notice.title    : '')
+  const [message,  setMessage]  = useState(editing ? notice.message  : '')
+  const [category, setCategory] = useState(editing ? notice.category : 'General')
+  const [postedBy, setPostedBy] = useState(editing ? notice.postedBy : '')
+  const [photo,    setPhoto]    = useState(null)
+  const [loading,  setLoading]  = useState(false)
 
-  const [title, setTitle] = useState(existingNotice?.title || '');
-  const [message, setMessage] = useState(existingNotice?.message || '');
-  const [category, setCategory] = useState(existingNotice?.category || 'General');
-  const [postedBy, setPostedBy] = useState(existingNotice?.postedBy || '');
-  const [imageUri, setImageUri] = useState(null);
-  const [existingImage, setExistingImage] = useState(existingNotice?.noticeImage || null);
-  const [loading, setLoading] = useState(false);
-
-  const getToken = async () => {
-    return propToken || await AsyncStorage.getItem('token');
-  };
-
-  useEffect(() => {
-    navigation.setOptions({
-      title: isEditing ? 'Edit Notice' : 'New Notice',
-    });
-  }, [isEditing, navigation]);
-
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Please allow access to your photo library.');
-      return;
-    }
+  const pickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      mediaTypes: ['images'],
       quality: 0.8,
-    });
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-      setExistingImage(null);
+      allowsEditing: false,
+      exif: false,
+      base64: false,
+    })
+    if (!result.canceled) setPhoto(result.assets[0])
+  }
+
+  const handleSave = async () => {
+    if (!title || !message || !postedBy) {
+      Alert.alert('Error', 'Please fill in all required fields')
+      return
     }
-  };
-
-  const validate = () => {
-    if (!title.trim()) { Alert.alert('Validation', 'Title is required.'); return false; }
-    if (!message.trim()) { Alert.alert('Validation', 'Message is required.'); return false; }
-    if (!postedBy.trim()) { Alert.alert('Validation', 'Posted By is required.'); return false; }
-    return true;
-  };
-
-  const handleSubmit = async () => {
-    if (!validate()) return;
-    setLoading(true);
     try {
-      const token = await getToken();
-      const formData = new FormData();
-      formData.append('title', title.trim());
-      formData.append('message', message.trim());
-      formData.append('category', category);
-      formData.append('postedBy', postedBy.trim());
+      setLoading(true)
+      const formData = new FormData()
+      formData.append('title',    title)
+      formData.append('message',  message)
+      formData.append('category', category)
+      formData.append('postedBy', postedBy)
 
-      if (imageUri) {
-        const filename = imageUri.split('/').pop();
-        const type = 'image/' + (filename.split('.').pop() === 'png' ? 'png' : 'jpeg');
-        formData.append('noticeImage', { uri: imageUri, name: filename, type });
+      if (photo) {
+        formData.append('noticeImage', {
+          uri:  photo.uri,
+          type: 'image/jpeg',
+          name: 'notice.jpg'
+        })
       }
 
       const config = {
         headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      };
-
-      if (isEditing) {
-        await axios.put(`${API_URL}/api/notices/${existingNotice._id}`, formData, config);
-        Alert.alert('Success', 'Notice updated successfully.', [
-          { text: 'OK', onPress: () => navigation.goBack() },
-        ]);
-      } else {
-        await axios.post(`${API_URL}/api/notices`, formData, config);
-        Alert.alert('Success', 'Notice posted successfully.', [
-          { text: 'OK', onPress: () => navigation.goBack() },
-        ]);
+          Authorization:  `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
       }
-    } catch (err) {
-      Alert.alert('Error', err.response?.data?.message || 'Something went wrong.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const accentColor = CATEGORY_ACCENT[category];
+      if (editing) {
+        await api.put(`/notices/${notice._id}`, formData, config)
+      } else {
+        await api.post('/notices', formData, config)
+      }
+
+      Alert.alert('Success', editing ? 'Notice updated!' : 'Notice posted!')
+      navigation.goBack()
+    } catch (error) {
+      console.log('Save error:', error)
+      console.log('Error response:', error.response?.data)
+      Alert.alert('Error', error.response?.data?.message || error.message || 'Failed to save notice')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const accentColor = CATEGORY_ACCENT[category]
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.container}>
+      <Text style={styles.title}>{editing ? 'Edit Notice' : 'New Notice'}</Text>
 
-          {/* Page title */}
-          <View style={styles.pageHeader}>
-            <View style={[styles.pageHeaderAccent, { backgroundColor: accentColor }]} />
-            <Text style={styles.pageTitle}>{isEditing ? 'Edit Notice' : 'New Notice'}</Text>
-          </View>
+      <Text style={styles.label}>Title</Text>
+      <TextInput
+        style={styles.input}
+        value={title}
+        onChangeText={setTitle}
+        placeholder="e.g. Site Safety Briefing"
+      />
 
-          {/* Title */}
-          <View style={styles.fieldGroup}>
-            <FormLabel label="Title" required />
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Site Safety Briefing"
-              placeholderTextColor="#CBD5E1"
-              value={title}
-              onChangeText={setTitle}
-              returnKeyType="next"
-            />
-          </View>
+      <Text style={styles.label}>Message</Text>
+      <TextInput
+        style={[styles.input, styles.textArea]}
+        value={message}
+        onChangeText={setMessage}
+        placeholder="Write the notice content here..."
+        multiline
+        numberOfLines={5}
+      />
 
-          {/* Message */}
-          <View style={styles.fieldGroup}>
-            <FormLabel label="Message" required />
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Write the notice content here…"
-              placeholderTextColor="#CBD5E1"
-              value={message}
-              onChangeText={setMessage}
-              multiline
-              numberOfLines={5}
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Category */}
-          <View style={styles.fieldGroup}>
-            <FormLabel label="Category" required />
-            <View style={styles.categoryRow}>
-              {CATEGORIES.map((cat) => {
-                const selected = category === cat;
-                const catColor = CATEGORY_ACCENT[cat];
-                return (
-                  <TouchableOpacity
-                    key={cat}
-                    style={[
-                      styles.categoryChip,
-                      selected && { backgroundColor: catColor, borderColor: catColor },
-                    ]}
-                    onPress={() => setCategory(cat)}
-                  >
-                    <Text style={[styles.categoryChipText, selected && styles.categoryChipTextSelected]}>
-                      {cat}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Posted By */}
-          <View style={styles.fieldGroup}>
-            <FormLabel label="Posted By" required />
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Site Manager"
-              placeholderTextColor="#CBD5E1"
-              value={postedBy}
-              onChangeText={setPostedBy}
-              returnKeyType="done"
-            />
-          </View>
-
-          {/* Image Picker */}
-          <View style={styles.fieldGroup}>
-            <FormLabel label="Notice Image" />
-            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-              {imageUri ? (
-                <Image source={{ uri: imageUri }} style={styles.imagePreview} resizeMode="cover" />
-              ) : existingImage ? (
-                <Image
-                  source={{ uri: existingImage }}
-                  style={styles.imagePreview}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.imagePlaceholder}>
-                  <Text style={styles.imagePlaceholderIcon}>🖼️</Text>
-                  <Text style={styles.imagePlaceholderText}>Tap to upload image</Text>
-                  <Text style={styles.imagePlaceholderSub}>JPG, PNG supported</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            {(imageUri || existingImage) && (
-              <TouchableOpacity
-                onPress={() => { setImageUri(null); setExistingImage(null); }}
-                style={styles.removeImage}
-              >
-                <Text style={styles.removeImageText}>✕  Remove image</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Submit */}
+      <Text style={styles.label}>Category</Text>
+      <View style={styles.optionRow}>
+        {CATEGORIES.map(cat => (
           <TouchableOpacity
-            style={[styles.submitBtn, { backgroundColor: accentColor }, loading && styles.submitDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
+            key={cat}
+            style={[
+              styles.option,
+              category === cat && { backgroundColor: CATEGORY_ACCENT[cat], borderColor: CATEGORY_ACCENT[cat] }
+            ]}
+            onPress={() => setCategory(cat)}
           >
-            {loading
-              ? <ActivityIndicator color="#FFFFFF" />
-              : <Text style={styles.submitText}>{isEditing ? 'Update Notice' : 'Post Notice'}</Text>
-            }
+            <Text style={[styles.optionText, category === cat && styles.optionTextActive]}>
+              {cat}
+            </Text>
           </TouchableOpacity>
+        ))}
+      </View>
 
-          <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()} disabled={loading}>
-            <Text style={styles.cancelText}>Cancel</Text>
-          </TouchableOpacity>
+      <Text style={styles.label}>Posted By</Text>
+      <TextInput
+        style={styles.input}
+        value={postedBy}
+        onChangeText={setPostedBy}
+        placeholder="e.g. Site Manager"
+      />
 
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-};
+      <Text style={styles.label}>Notice Image</Text>
+      <TouchableOpacity style={styles.uploadBtn} onPress={pickPhoto}>
+        <Text style={styles.uploadBtnText}>
+          {photo ? 'Photo selected' : '+ Select notice image'}
+        </Text>
+      </TouchableOpacity>
+      {photo && (
+        <Image source={{ uri: photo.uri }} style={styles.preview} />
+      )}
+      {!photo && editing && notice.noticeImage ? (
+        <Image source={{ uri: notice.noticeImage }} style={styles.preview} />
+      ) : null}
+
+      <TouchableOpacity
+        style={[styles.saveBtn, { backgroundColor: accentColor }]}
+        onPress={handleSave}
+        disabled={loading}
+      >
+        {loading
+          ? <ActivityIndicator color="#fff" />
+          : <Text style={styles.saveBtnText}>{editing ? 'Update Notice' : 'Post Notice'}</Text>
+        }
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()} disabled={loading}>
+        <Text style={styles.cancelText}>Cancel</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  )
+}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scroll: { padding: 20, paddingBottom: 40 },
-
-  pageHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 24, gap: 10 },
-  pageHeaderAccent: { width: 4, height: 26, borderRadius: 2 },
-  pageTitle: { fontSize: 22, fontWeight: '700', color: '#0F172A', letterSpacing: -0.5 },
-
-  fieldGroup: { marginBottom: 20 },
-  label: { fontSize: 13, fontWeight: '600', color: '#475569', marginBottom: 8, letterSpacing: 0.3 },
-  required: { color: '#D7302D' },
-
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
-    fontSize: 15,
-    color: '#0F172A',
-  },
-  textArea: { minHeight: 110, paddingTop: 13 },
-
-  categoryRow: { flexDirection: 'row', gap: 10 },
-  categoryChip: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-  },
-  categoryChipText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
-  categoryChipTextSelected: { color: '#FFFFFF' },
-
-  imagePicker: {
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
-  },
-  imagePreview: { width: '100%', height: 200 },
-  imagePlaceholder: {
-    height: 150,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 6,
-  },
-  imagePlaceholderIcon: { fontSize: 36 },
-  imagePlaceholderText: { fontSize: 15, fontWeight: '600', color: '#475569' },
-  imagePlaceholderSub: { fontSize: 12, color: '#94A3B8' },
-  removeImage: { marginTop: 8, alignSelf: 'flex-start' },
-  removeImageText: { fontSize: 13, color: '#D7302D', fontWeight: '500' },
-
-  submitBtn: {
-    paddingVertical: 15,
-    borderRadius: 13,
-    alignItems: 'center',
-    marginTop: 10,
-    shadowColor: '#1D4ED8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  submitDisabled: { opacity: 0.7 },
-  submitText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-
-  cancelBtn: { marginTop: 12, alignItems: 'center', paddingVertical: 12 },
-  cancelText: { fontSize: 15, color: '#94A3B8', fontWeight: '500' },
-});
-
-export default NoticeFormScreen;
+  container:       { flex: 1, backgroundColor: '#fff', padding: 20 },
+  title:           { fontSize: 22, fontWeight: 'bold', color: '#0F172A', marginBottom: 24 },
+  label:           { fontSize: 13, color: '#888', marginBottom: 6, marginTop: 12 },
+  input:           { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, fontSize: 15 },
+  textArea:        { height: 110, textAlignVertical: 'top' },
+  optionRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  option:          { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
+  optionText:      { color: '#555', fontSize: 13 },
+  optionTextActive:{ color: '#fff' },
+  uploadBtn:       { borderWidth: 1, borderColor: '#1A5276', borderRadius: 8, padding: 12, alignItems: 'center', borderStyle: 'dashed', marginTop: 4 },
+  uploadBtnText:   { color: '#1A5276', fontSize: 14 },
+  preview:         { width: '100%', height: 180, borderRadius: 8, marginTop: 10 },
+  saveBtn:         { borderRadius: 8, padding: 14, alignItems: 'center', marginTop: 24 },
+  saveBtnText:     { color: '#fff', fontSize: 15, fontWeight: '600' },
+  cancelBtn:       { marginTop: 12, alignItems: 'center', paddingVertical: 12, marginBottom: 40 },
+  cancelText:      { fontSize: 15, color: '#94A3B8', fontWeight: '500' },
+})
