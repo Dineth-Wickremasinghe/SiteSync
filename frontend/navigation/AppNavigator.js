@@ -2,13 +2,18 @@ import React, { useState } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+
 import LoginScreen from '../screens/auth/LoginScreen'
 import RegisterScreen from '../screens/auth/RegisterScreen'
 import WorkerListScreen from '../screens/workers/WorkerListScreen'
 import WorkerFormScreen from '../screens/workers/WorkerFormScreen'
 import NoticeListScreen from '../screens/notices/NoticeListScreen'
 import NoticeFormScreen from '../screens/notices/NoticeFormScreen'
-
+import ReportListScreen from '../screens/reports/ReportListScreen'
+import ReportFormScreen from '../screens/reports/ReportFormScreen'
+import IncidentListScreen from '../screens/incidents/IncidentListScreen'
+import IncidentFormScreen from '../screens/incidents/IncidentFormScreen'
+import ProfileScreen from '../screens/ProfileScreen'
 
 const Stack = createNativeStackNavigator()
 const Tab   = createBottomTabNavigator()
