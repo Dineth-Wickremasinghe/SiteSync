@@ -7,6 +7,8 @@ import LoginScreen from '../screens/auth/LoginScreen'
 import RegisterScreen from '../screens/auth/RegisterScreen'
 import WorkerListScreen from '../screens/workers/WorkerListScreen'
 import WorkerFormScreen from '../screens/workers/WorkerFormScreen'
+import NoticeListScreen from '../screens/notices/NoticeListScreen'
+import NoticeFormScreen from '../screens/notices/NoticeFormScreen'
 import ReportListScreen from '../screens/reports/ReportListScreen'
 import ReportFormScreen from '../screens/reports/ReportFormScreen'
 import IncidentListScreen from '../screens/incidents/IncidentListScreen'
@@ -55,6 +57,19 @@ function IncidentsStack({ token }) {
   )
 }
 
+function NoticesStack({ token }) {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="NoticeListScreen">
+        {props => <NoticeListScreen {...props} token={token} />}
+      </Stack.Screen>
+      <Stack.Screen name="NoticeFormScreen">
+        {props => <NoticeFormScreen {...props} token={token} />}
+      </Stack.Screen>
+    </Stack.Navigator>
+  )
+}
+
 function ProfileStack({ token, setToken }) {
   return (
     <Stack.Navigator>
@@ -71,6 +86,7 @@ function AppTabs({ token, setToken }) {
       <Tab.Screen name="Workers"   children={() => <WorkersStack   token={token} />} />
       <Tab.Screen name="Reports"   children={() => <ReportsStack   token={token} />} />
       <Tab.Screen name="Incidents" children={() => <IncidentsStack token={token} />} />
+      <Tab.Screen name="Notices"   children={() => <NoticesStack   token={token} />} />
       <Tab.Screen name="Profile"   children={() => <ProfileStack   token={token} setToken={setToken} />} />
     </Tab.Navigator>
   )
@@ -78,7 +94,6 @@ function AppTabs({ token, setToken }) {
 
 export default function AppNavigator() {
   const [token, setToken] = useState(null)
-
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
