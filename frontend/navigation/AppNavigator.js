@@ -26,18 +26,19 @@ export default function AppNavigator() {
           </>
         ) : (
           <>
-            <Stack.Screen name="WorkerList">
-              {props => <WorkerListScreen {...props} token={token} />}
-            </Stack.Screen>
-            <Stack.Screen name="WorkerForm">
-              {props => <WorkerFormScreen {...props} token={token} />}
-            </Stack.Screen>
             <Stack.Screen name="EquipmentList" options={{ title: 'Equipment' }}>
               {props => <EquipmentListScreen {...props} token={token} />}
             </Stack.Screen>
             <Stack.Screen name="EquipmentForm" options={{ title: 'Equipment Details' }}>
               {props => <EquipmentFormScreen {...props} token={token} />}
             </Stack.Screen>
+            <Stack.Screen name="WorkerList">
+              {props => <WorkerListScreen {...props} token={token} />}
+            </Stack.Screen>
+            <Stack.Screen name="WorkerForm">
+              {props => <WorkerFormScreen {...props} token={token} />}
+            </Stack.Screen>
+            
           </>
         )}
       </Stack.Navigator>
