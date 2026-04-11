@@ -2,17 +2,20 @@ import React, { useState } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-
 import LoginScreen from '../screens/auth/LoginScreen'
 import RegisterScreen from '../screens/auth/RegisterScreen'
 import WorkerListScreen from '../screens/workers/WorkerListScreen'
 import WorkerFormScreen from '../screens/workers/WorkerFormScreen'
+import EquipmentListScreen from '../screens/equipment/EquipmentListScreen'
+import EquipmentFormScreen from '../screens/equipment/EquipmentFormScreen'
 import NoticeListScreen from '../screens/notices/NoticeListScreen'
 import NoticeFormScreen from '../screens/notices/NoticeFormScreen'
 import ReportListScreen from '../screens/reports/ReportListScreen'
 import ReportFormScreen from '../screens/reports/ReportFormScreen'
 import IncidentListScreen from '../screens/incidents/IncidentListScreen'
 import IncidentFormScreen from '../screens/incidents/IncidentFormScreen'
+import NoticeListScreen from '../screens/notices/NoticeListScreen'
+import NoticeFormScreen from '../screens/notices/NoticeFormScreen'
 import ProfileScreen from '../screens/ProfileScreen'
 
 const Stack = createNativeStackNavigator()
@@ -21,11 +24,24 @@ const Tab   = createBottomTabNavigator()
 function WorkersStack({ token }) {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="WorkerList">
+      <Stack.Screen name="WorkerListScreen">
         {props => <WorkerListScreen {...props} token={token} />}
       </Stack.Screen>
-      <Stack.Screen name="WorkerForm">
+      <Stack.Screen name="WorkerFormScreen">
         {props => <WorkerFormScreen {...props} token={token} />}
+      </Stack.Screen>
+    </Stack.Navigator>
+  )
+}
+
+function EquipmentStack({ token }) {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="EquipmentListScreen">
+        {props => <EquipmentListScreen {...props} token={token} />}
+      </Stack.Screen>
+      <Stack.Screen name="EquipmentFormScreen">
+        {props => <EquipmentFormScreen {...props} token={token} />}
       </Stack.Screen>
     </Stack.Navigator>
   )
@@ -34,10 +50,10 @@ function WorkersStack({ token }) {
 function ReportsStack({ token }) {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="ReportList">
+      <Stack.Screen name="ReportListScreen">
         {props => <ReportListScreen {...props} token={token} />}
       </Stack.Screen>
-      <Stack.Screen name="ReportForm">
+      <Stack.Screen name="ReportFormScreen">
         {props => <ReportFormScreen {...props} token={token} />}
       </Stack.Screen>
     </Stack.Navigator>
@@ -47,10 +63,10 @@ function ReportsStack({ token }) {
 function IncidentsStack({ token }) {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="IncidentList">
+      <Stack.Screen name="IncidentListScreen">
         {props => <IncidentListScreen {...props} token={token} />}
       </Stack.Screen>
-      <Stack.Screen name="IncidentForm">
+      <Stack.Screen name="IncidentFormScreen">
         {props => <IncidentFormScreen {...props} token={token} />}
       </Stack.Screen>
     </Stack.Navigator>
@@ -73,7 +89,7 @@ function NoticesStack({ token }) {
 function ProfileStack({ token, setToken }) {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Profile">
+      <Stack.Screen name="ProfileScreen">
         {props => <ProfileScreen {...props} token={token} setToken={setToken} />}
       </Stack.Screen>
     </Stack.Navigator>
@@ -84,6 +100,7 @@ function AppTabs({ token, setToken }) {
   return (
     <Tab.Navigator>
       <Tab.Screen name="Workers"   children={() => <WorkersStack   token={token} />} />
+      <Tab.Screen name="Equipment" children={() => <EquipmentStack token={token} />} />
       <Tab.Screen name="Reports"   children={() => <ReportsStack   token={token} />} />
       <Tab.Screen name="Incidents" children={() => <IncidentsStack token={token} />} />
       <Tab.Screen name="Notices"   children={() => <NoticesStack   token={token} />} />
