@@ -9,7 +9,6 @@ import WorkerFormScreen from '../screens/workers/WorkerFormScreen'
 import EquipmentListScreen from '../screens/equipment/EquipmentListScreen'
 import EquipmentFormScreen from '../screens/equipment/EquipmentFormScreen'
 
-
 const Stack = createNativeStackNavigator()
 
 export default function AppNavigator() {
@@ -27,15 +26,12 @@ export default function AppNavigator() {
           </>
         ) : (
           <>
-            {/* Worker Screens */}
             <Stack.Screen name="WorkerList">
               {props => <WorkerListScreen {...props} token={token} />}
             </Stack.Screen>
             <Stack.Screen name="WorkerForm">
               {props => <WorkerFormScreen {...props} token={token} />}
             </Stack.Screen>
-
-            {/* Equipment Screens */}
             <Stack.Screen name="EquipmentList" options={{ title: 'Equipment' }}>
               {props => <EquipmentListScreen {...props} token={token} />}
             </Stack.Screen>
