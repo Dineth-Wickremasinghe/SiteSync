@@ -14,8 +14,7 @@ import ReportListScreen from '../screens/reports/ReportListScreen'
 import ReportFormScreen from '../screens/reports/ReportFormScreen'
 import IncidentListScreen from '../screens/incidents/IncidentListScreen'
 import IncidentFormScreen from '../screens/incidents/IncidentFormScreen'
-import NoticeListScreen from '../screens/notices/NoticeListScreen'
-import NoticeFormScreen from '../screens/notices/NoticeFormScreen'
+
 import ProfileScreen from '../screens/ProfileScreen'
 
 const Stack = createNativeStackNavigator()

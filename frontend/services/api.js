@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'https://sitesync-backend-ebftd0g8aybxhjbk.eastasia-01.azurewebsites.net/api'
+  baseURL: 'http://192.168.1.6:5000/api'
 
 })
 
