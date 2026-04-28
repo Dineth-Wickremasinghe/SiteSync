@@ -2,11 +2,11 @@ import React, { useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, ActivityIndicator,
-  ImageBackground, KeyboardAvoidingView, Platform
+  KeyboardAvoidingView, Platform
 } from 'react-native'
 import api from '../../services/api'
 
-export default function LoginScreen({ navigation, setToken }) {
+export default function LoginScreen({ navigation, setToken, setRole }) {
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [loading,  setLoading]  = useState(false)
@@ -22,6 +22,7 @@ export default function LoginScreen({ navigation, setToken }) {
       const res = await api.post('/auth/login', { email, password })
       console.log('Login response:', res.data)
       setToken(res.data.token)
+      setRole(res.data.role)
       api.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`
     } catch (error) {
       console.log('Full error:', error)
@@ -38,10 +39,9 @@ export default function LoginScreen({ navigation, setToken }) {
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Dark construction site background */}
       <View style={styles.container}>
 
-        {/* Top hero section */}
+        {/* Hero */}
         <View style={styles.hero}>
           <View style={styles.iconRow}>
             <Text style={styles.heroIcon}>🏗️</Text>
@@ -49,7 +49,7 @@ export default function LoginScreen({ navigation, setToken }) {
           <Text style={styles.appName}>SiteSync</Text>
           <Text style={styles.tagline}>Construction Site Management</Text>
 
-          {/* Yellow warning stripe accent */}
+          {/* Warning stripe */}
           <View style={styles.stripeRow}>
             {Array.from({ length: 12 }).map((_, i) => (
               <View
@@ -60,7 +60,7 @@ export default function LoginScreen({ navigation, setToken }) {
           </View>
         </View>
 
-        {/* Login card */}
+        {/* Card */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Sign In</Text>
           <Text style={styles.cardSubtitle}>Welcome back!</Text>
@@ -93,7 +93,7 @@ export default function LoginScreen({ navigation, setToken }) {
           >
             {loading
               ? <ActivityIndicator color="#1C1C1E" />
-              : <Text style={styles.btnText}> Sign In</Text>
+              : <Text style={styles.btnText}>Sign In</Text>
             }
           </TouchableOpacity>
 
@@ -121,8 +121,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1C1C1E',
   },
-
-  // Hero section
   hero: {
     backgroundColor: '#1C1C1E',
     paddingTop: 70,
@@ -146,19 +144,10 @@ const styles = StyleSheet.create({
   heroIcon:  { fontSize: 40 },
   appName:   { fontSize: 36, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1, marginBottom: 4 },
   tagline:   { fontSize: 13, color: '#9CA3AF', letterSpacing: 0.5, marginBottom: 24 },
-
-  // Warning stripe
-  stripeRow: {
-    flexDirection: 'row',
-    width: '100%',
-    height: 10,
-    overflow: 'hidden',
-  },
+  stripeRow: { flexDirection: 'row', width: '100%', height: 10, overflow: 'hidden' },
   stripe:       { flex: 1, height: 10, transform: [{ skewX: '-20deg' }] },
   stripeYellow: { backgroundColor: '#F59E0B' },
   stripeBlack:  { backgroundColor: '#1C1C1E' },
-
-  // Card
   card: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -166,12 +155,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     padding: 28,
     paddingTop: 32,
-    marginTop: 0,
   },
   cardTitle:    { fontSize: 24, fontWeight: '800', color: '#111827', marginBottom: 4 },
   cardSubtitle: { fontSize: 13, color: '#9CA3AF', marginBottom: 28 },
-
-  // Form
   label: { fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 6, marginTop: 4 },
   input: {
     borderWidth: 1.5,
@@ -183,8 +169,6 @@ const styles = StyleSheet.create({
     color: '#111827',
     backgroundColor: '#F9FAFB',
   },
-
-  // Button
   btn: {
     backgroundColor: '#F59E0B',
     borderRadius: 10,
@@ -198,21 +182,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  btnDisabled: { opacity: 0.6 },
-  btnText:     { color: '#1C1C1E', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
-
-  // Register link
-  registerLink: { alignItems: 'center' },
-  registerText: { fontSize: 14, color: '#9CA3AF' },
+  btnDisabled:      { opacity: 0.6 },
+  btnText:          { color: '#1C1C1E', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
+  registerLink:     { alignItems: 'center' },
+  registerText:     { fontSize: 14, color: '#9CA3AF' },
   registerTextBold: { color: '#F59E0B', fontWeight: '700' },
-
-  // Footer
   footer: {
     position: 'absolute',
     bottom: 16,
     left: 0,
     right: 0,
-    textAlign: 'center',
     fontSize: 11,
     color: '#4B5563',
     textAlign: 'center',
