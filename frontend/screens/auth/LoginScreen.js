@@ -41,6 +41,16 @@ export default function LoginScreen({ navigation, setToken, setRole }) {
     >
       <View style={styles.container}>
 
+        {/* Top stripe */}
+        <View style={[styles.stripeRow, { marginTop: 44 }]}>
+        {Array.from({ length: 13 }).map((_, i) => (
+       <View
+        key={i}
+      style={[styles.stripe, i % 2 === 0 ? styles.stripeYellow : styles.stripeBlack]}
+    />
+  ))}
+</View>
+
         {/* Hero */}
         <View style={styles.hero}>
           <View style={styles.iconRow}>
@@ -49,9 +59,9 @@ export default function LoginScreen({ navigation, setToken, setRole }) {
           <Text style={styles.appName}>SiteSync</Text>
           <Text style={styles.tagline}>Construction Site Management</Text>
 
-          {/* Warning stripe */}
+          {/* Bottom stripe */}
           <View style={styles.stripeRow}>
-            {Array.from({ length: 12 }).map((_, i) => (
+            {Array.from({ length: 13 }).map((_, i) => (
               <View
                 key={i}
                 style={[styles.stripe, i % 2 === 0 ? styles.stripeYellow : styles.stripeBlack]}
@@ -143,7 +153,7 @@ const styles = StyleSheet.create({
   },
   heroIcon:  { fontSize: 40 },
   appName:   { fontSize: 36, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1, marginBottom: 4 },
-  tagline:   { fontSize: 13, color: '#9CA3AF', letterSpacing: 0.5, marginBottom: 24 },
+  tagline:   { fontSize: 13, color: '#9CA3AF', letterSpacing: 0.5, marginBottom: 60 },
   stripeRow: { flexDirection: 'row', width: '100%', height: 10, overflow: 'hidden' },
   stripe:       { flex: 1, height: 10, transform: [{ skewX: '-20deg' }] },
   stripeYellow: { backgroundColor: '#F59E0B' },

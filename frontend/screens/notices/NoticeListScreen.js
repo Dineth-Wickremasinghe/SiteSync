@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import api from '../../services/api'
+import { colors, common, typography } from '../../theme'
 
 const CATEGORY_COLORS = {
   Safety:   { bg: '#FFF1F0', text: '#D7302D', dot: '#D7302D' },
@@ -13,11 +14,11 @@ const CATEGORY_COLORS = {
 }
 
 const CategoryBadge = ({ category }) => {
-  const colors = CATEGORY_COLORS[category] || CATEGORY_COLORS.General
+  const cat = CATEGORY_COLORS[category] || CATEGORY_COLORS.General
   return (
-    <View style={[styles.badge, { backgroundColor: colors.bg }]}>
-      <View style={[styles.badgeDot, { backgroundColor: colors.dot }]} />
-      <Text style={[styles.badgeText, { color: colors.text }]}>{category}</Text>
+    <View style={[styles.badge, { backgroundColor: cat.bg }]}>
+      <View style={[styles.badgeDot, { backgroundColor: cat.dot }]} />
+      <Text style={[styles.badgeText, { color: cat.text }]}>{category}</Text>
     </View>
   )
 }
@@ -43,11 +44,7 @@ export default function NoticeListScreen({ navigation, token }) {
     }
   }
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchNotices()
-    }, [])
-  )
+  useFocusEffect(useCallback(() => { fetchNotices() }, []))
 
   const deleteNotice = async (id) => {
     Alert.alert('Confirm', 'Delete this notice?', [
@@ -69,7 +66,7 @@ export default function NoticeListScreen({ navigation, token }) {
   }
 
   const renderNotice = ({ item }) => (
-    <View style={styles.card}>
+    <View style={[common.card, { padding: 0, overflow: 'hidden' }]}>
       {item.noticeImage ? (
         <Image source={{ uri: item.noticeImage }} style={styles.cardImage} resizeMode="cover" />
       ) : (
@@ -93,18 +90,18 @@ export default function NoticeListScreen({ navigation, token }) {
             <Text style={styles.cardPostedByLabel}>Posted by  </Text>
             {item.postedBy}
           </Text>
-          <View style={styles.cardActions}>
+          <View style={common.cardActions}>
             <TouchableOpacity
-              style={styles.editBtn}
+              style={common.editBtn}
               onPress={() => navigation.navigate('NoticeFormScreen', { notice: item, token })}
             >
-              <Text style={styles.editBtnText}>Edit</Text>
+              <Text style={common.editBtnText}>Edit</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.deleteBtn}
+              style={common.deleteBtn}
               onPress={() => deleteNotice(item._id)}
             >
-              <Text style={styles.deleteBtnText}>Delete</Text>
+              <Text style={common.deleteBtnText}>Delete</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -114,32 +111,34 @@ export default function NoticeListScreen({ navigation, token }) {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1D4ED8" />
+      <View style={common.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     )
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={common.screenContainer}>
+      <View style={common.header}>
         <View>
-          <Text style={styles.headerTitle}>Notice Board</Text>
-          <Text style={styles.headerSub}>{notices.length} notice{notices.length !== 1 ? 's' : ''}</Text>
+          <Text style={typography.screenTitle}>Notice Board</Text>
+          <Text style={typography.screenSubtitle}>
+            {notices.length} notice{notices.length !== 1 ? 's' : ''}
+          </Text>
         </View>
         <TouchableOpacity
-          style={styles.addButton}
+          style={common.addBtn}
           onPress={() => navigation.navigate('NoticeFormScreen', { notice: null, token })}
         >
-          <Text style={styles.addButtonText}>+ Add</Text>
+          <Text style={common.addBtnText}>+ Add</Text>
         </TouchableOpacity>
       </View>
 
       {notices.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyIcon}>📭</Text>
-          <Text style={styles.emptyTitle}>No Notices Yet</Text>
-          <Text style={styles.emptyText}>Tap "+ Add" to post the first notice.</Text>
+        <View style={common.center}>
+          <Text style={common.emptyIcon}>📭</Text>
+          <Text style={[typography.cardTitle, { fontSize: 20, marginBottom: 8 }]}>No Notices Yet</Text>
+          <Text style={typography.emptyText}>Tap "+ Add" to post the first notice.</Text>
         </View>
       ) : (
         <FlatList
@@ -156,34 +155,18 @@ export default function NoticeListScreen({ navigation, token }) {
 }
 
 const styles = StyleSheet.create({
-  container:            { flex: 1, backgroundColor: '#F8FAFC' },
-  center:               { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  header:               { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
-  headerTitle:          { fontSize: 22, fontWeight: '700', color: '#0F172A' },
-  headerSub:            { fontSize: 13, color: '#94A3B8', marginTop: 2 },
-  addButton:            { backgroundColor: '#1D4ED8', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 10 },
-  addButtonText:        { color: '#fff', fontWeight: '600', fontSize: 14 },
-  card:                 { backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden', elevation: 3 },
   cardImage:            { width: '100%', height: 160 },
-  cardImagePlaceholder: { width: '100%', height: 100, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center' },
+  cardImagePlaceholder: { width: '100%', height: 100, backgroundColor: colors.inputBg, justifyContent: 'center', alignItems: 'center' },
   placeholderIcon:      { fontSize: 36 },
   cardBody:             { padding: 16 },
   cardHeader:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   badge:                { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, gap: 5 },
   badgeDot:             { width: 6, height: 6, borderRadius: 3 },
   badgeText:            { fontSize: 12, fontWeight: '600' },
-  cardDate:             { fontSize: 12, color: '#94A3B8' },
-  cardTitle:            { fontSize: 17, fontWeight: '700', color: '#0F172A', marginBottom: 6, lineHeight: 24 },
-  cardMessage:          { fontSize: 14, color: '#475569', lineHeight: 20, marginBottom: 14 },
+  cardDate:             { fontSize: 12, color: colors.textMuted },
+  cardTitle:            { fontSize: 17, fontWeight: '700', color: colors.textDark, marginBottom: 6, lineHeight: 24 },
+  cardMessage:          { fontSize: 14, color: colors.textMuted, lineHeight: 20, marginBottom: 14 },
   cardFooter:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardPostedBy:         { fontSize: 12, color: '#64748B', flex: 1 },
-  cardPostedByLabel:    { color: '#94A3B8' },
-  cardActions:          { flexDirection: 'row', gap: 8 },
-  editBtn:              { backgroundColor: '#EFF6FF', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8 },
-  editBtnText:          { color: '#1D4ED8', fontWeight: '600', fontSize: 13 },
-  deleteBtn:            { backgroundColor: '#FFF1F0', paddingHorizontal: 14, paddingVertical: 6, borderRadius: 8 },
-  deleteBtnText:        { color: '#D7302D', fontWeight: '600', fontSize: 13 },
-  emptyIcon:            { fontSize: 52, marginBottom: 16 },
-  emptyTitle:           { fontSize: 20, fontWeight: '700', color: '#0F172A', marginBottom: 8 },
-  emptyText:            { fontSize: 14, color: '#94A3B8', textAlign: 'center' },
+  cardPostedBy:         { fontSize: 12, color: colors.textMuted, flex: 1 },
+  cardPostedByLabel:    { color: colors.textLight },
 })
