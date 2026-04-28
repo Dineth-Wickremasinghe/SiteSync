@@ -27,7 +27,8 @@ const workerSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
-  }
+  },
+  userId:     { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }
 }, { timestamps: true })
 
 module.exports = mongoose.model('Worker', workerSchema)

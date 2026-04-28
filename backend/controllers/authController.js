@@ -125,5 +125,26 @@ const logoutUser = async (req, res) => {
   }
 }
 
+// @GET /api/auth/users
+const getUsers = async (req, res) => {
+  try {
+    const Worker = require('../models/Worker')
 
-module.exports = { registerUser, loginUser, logoutUser, getProfile, updateProfile }
+    const linkedWorkers = await Worker.find({ userId: { $ne: null } }).select('userId')
+    const linkedUserIds = linkedWorkers.map(w => w.userId.toString())
+
+    const currentUserId = req.query.currentUserId || null
+
+    const users = await User.find({
+      role: 'worker',
+      _id: { $nin: linkedUserIds.filter(id => id !== currentUserId) }
+    }).select('name email role')
+
+    res.json(users)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+
+module.exports = { registerUser, loginUser, logoutUser, getProfile, updateProfile, getUsers }

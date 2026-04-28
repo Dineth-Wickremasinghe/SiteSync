@@ -10,6 +10,7 @@ export default function RegisterScreen({ navigation }) {
   const [name,     setName]     = useState('')
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
+  const [role,     setRole]     = useState('worker')
   const [loading,  setLoading]  = useState(false)
 
   const handleRegister = async () => {
@@ -19,7 +20,7 @@ export default function RegisterScreen({ navigation }) {
     }
     try {
       setLoading(true)
-      await api.post('/auth/register', { name, email, password, role: 'worker' })
+      await api.post('/auth/register', { name, email, password, role })
       Alert.alert('Success', 'Account created! Please login.')
       navigation.navigate('Login')
     } catch (error) {
@@ -93,7 +94,25 @@ export default function RegisterScreen({ navigation }) {
             secureTextEntry
           />
 
-          
+          {/* Role selector */}
+          <Text style={styles.label}>Register as</Text>
+          <View style={styles.roleRow}>
+            {[
+              { value: 'worker',     label: 'Worker',     icon: '👷' },
+              { value: 'supervisor', label: 'Supervisor', icon: '🦺' },
+            ].map(r => (
+              <TouchableOpacity
+                key={r.value}
+                style={[styles.roleChip, role === r.value && styles.roleChipActive]}
+                onPress={() => setRole(r.value)}
+              >
+                <Text style={styles.roleChipIcon}>{r.icon}</Text>
+                <Text style={[styles.roleChipText, role === r.value && styles.roleChipTextActive]}>
+                  {r.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           <TouchableOpacity
             style={[styles.btn, loading && styles.btnDisabled]}
@@ -102,7 +121,7 @@ export default function RegisterScreen({ navigation }) {
           >
             {loading
               ? <ActivityIndicator color="#1C1C1E" />
-              : <Text style={styles.btnText}>  Create Account</Text>
+              : <Text style={styles.btnText}>Create Account</Text>
             }
           </TouchableOpacity>
 
@@ -152,9 +171,9 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 8,
   },
-  heroIcon:  { fontSize: 40 },
-  appName:   { fontSize: 36, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1, marginBottom: 4 },
-  tagline:   { fontSize: 13, color: '#9CA3AF', letterSpacing: 0.5, marginBottom: 24 },
+  heroIcon: { fontSize: 40 },
+  appName:  { fontSize: 36, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1, marginBottom: 4 },
+  tagline:  { fontSize: 13, color: '#9CA3AF', letterSpacing: 0.5, marginBottom: 24 },
 
   // Warning stripe
   stripeRow: {
@@ -192,21 +211,37 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9FAFB',
   },
 
-  // Role badge
-  roleBadge: {
+  // Role selector
+  roleRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 24,
+  },
+  roleChip: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FEF3C7',
-    borderRadius: 10,
+    justifyContent: 'center',
+    gap: 6,
     padding: 12,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#FDE68A',
-    gap: 8,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F9FAFB',
   },
-  roleBadgeIcon: { fontSize: 18 },
-  roleBadgeText: { fontSize: 13, color: '#92400E', flex: 1 },
-  roleBadgeBold: { fontWeight: '700', color: '#78350F' },
+  roleChipActive: {
+    backgroundColor: '#F59E0B',
+    borderColor: '#F59E0B',
+  },
+  roleChipIcon: { fontSize: 16 },
+  roleChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  roleChipTextActive: {
+    color: '#1C1C1E',
+  },
 
   // Button
   btn: {
@@ -221,12 +256,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  btnDisabled: { opacity: 0.6 },
-  btnText:     { color: '#1C1C1E', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
+  btnDisabled:   { opacity: 0.6 },
+  btnText:       { color: '#1C1C1E', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
 
   // Login link
-  loginLink: { alignItems: 'center' },
-  loginText: { fontSize: 14, color: '#9CA3AF' },
+  loginLink:     { alignItems: 'center' },
+  loginText:     { fontSize: 14, color: '#9CA3AF' },
   loginTextBold: { color: '#F59E0B', fontWeight: '700' },
 
   // Footer

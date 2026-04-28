@@ -6,18 +6,19 @@ import {
 } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import api from '../../services/api'
+import { colors, common, typography } from '../../theme'
 
 const TRADES   = ['All', 'Mason', 'Electrician', 'Plumber', 'General']
 const STATUSES = ['All', 'Active', 'Inactive']
 const SORTS    = ['Name', 'Trade', 'Status']
 
 export default function WorkerListScreen({ navigation, token }) {
-  const [workers,       setWorkers]       = useState([])
-  const [loading,       setLoading]       = useState(true)
-  const [search,        setSearch]        = useState('')
-  const [selectedTrade, setSelectedTrade] = useState('All')
-  const [selectedStatus,setSelectedStatus]= useState('All')
-  const [sortBy,        setSortBy]        = useState('Name')
+  const [workers,        setWorkers]        = useState([])
+  const [loading,        setLoading]        = useState(true)
+  const [search,         setSearch]         = useState('')
+  const [selectedTrade,  setSelectedTrade]  = useState('All')
+  const [selectedStatus, setSelectedStatus] = useState('All')
+  const [sortBy,         setSortBy]         = useState('Name')
 
   const fetchWorkers = async () => {
     try {
@@ -54,11 +55,12 @@ export default function WorkerListScreen({ navigation, token }) {
     ])
   }
 
-  // ── Stats (calculated from full list, not filtered) ──────────────────────
+  // ── Stats ─────────────────────────────────────────────────────────────────
   const stats = useMemo(() => ({
     total:    workers.length,
     active:   workers.filter(w => w.status === 'Active').length,
     inactive: workers.filter(w => w.status === 'Inactive').length,
+    linked:   workers.filter(w => w.userId).length,
     byTrade:  ['Mason', 'Electrician', 'Plumber', 'General'].map(t => ({
       trade: t,
       count: workers.filter(w => w.trade === t).length
@@ -83,41 +85,50 @@ export default function WorkerListScreen({ navigation, token }) {
     return result
   }, [workers, search, selectedTrade, selectedStatus, sortBy])
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Render card ───────────────────────────────────────────────────────────
   const renderWorker = ({ item }) => (
-    <View style={styles.card}>
+    <View style={common.card}>
       <View style={styles.cardTop}>
         {item.idPhotoUrl ? (
-          <Image source={{ uri: item.idPhotoUrl }} style={styles.photo} />
+          <Image source={{ uri: item.idPhotoUrl }} style={common.photo} />
         ) : (
-          <View style={styles.photoPlaceholder}>
-            <Text style={styles.photoPlaceholderText}>
+          <View style={common.photoPlaceholder}>
+            <Text style={common.photoPlaceholderText}>
               {item.name.charAt(0).toUpperCase()}
             </Text>
           </View>
         )}
         <View style={styles.cardInfo}>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.sub}>{item.trade} · {item.phone}</Text>
-          <View style={[styles.badge, item.status === 'Active' ? styles.badgeGreen : styles.badgeGray]}>
-            <Text style={[styles.badgeText, item.status === 'Active' ? styles.badgeTextGreen : styles.badgeTextGray]}>
-              {item.status}
-            </Text>
+          <Text style={typography.cardTitle}>{item.name}</Text>
+          <Text style={typography.cardSubtitle}>{item.trade} · {item.phone}</Text>
+          <View style={styles.badgeRow}>
+            <View style={[common.badge, item.status === 'Active' ? common.badgeGreen : common.badgeGray]}>
+              <Text style={[common.badgeText, item.status === 'Active' ? common.badgeTextGreen : common.badgeTextGray]}>
+                {item.status}
+              </Text>
+            </View>
+            {item.userId && (
+              <View style={styles.badgeLinked}>
+                <Text style={styles.badgeLinkedText}>
+                  🔗 {item.userId?.name || item.userId?.email || 'Linked'}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </View>
-      <View style={styles.cardActions}>
+      <View style={common.cardActions}>
         <TouchableOpacity
-          style={styles.editBtn}
+          style={common.editBtn}
           onPress={() => navigation.navigate('WorkerFormScreen', { worker: item, token })}
         >
-          <Text style={styles.editBtnText}>Edit</Text>
+          <Text style={common.editBtnText}>Edit</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.deleteBtn}
+          style={common.deleteBtn}
           onPress={() => deleteWorker(item._id)}
         >
-          <Text style={styles.deleteBtnText}>Delete</Text>
+          <Text style={common.deleteBtnText}>Delete</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -134,13 +145,18 @@ export default function WorkerListScreen({ navigation, token }) {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: '#3B6D11' }]}>{stats.active}</Text>
+            <Text style={[styles.statNumber, { color: colors.success }]}>{stats.active}</Text>
             <Text style={styles.statLabel}>Active</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: '#888' }]}>{stats.inactive}</Text>
+            <Text style={[styles.statNumber, { color: colors.textMuted }]}>{stats.inactive}</Text>
             <Text style={styles.statLabel}>Inactive</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statItem}>
+            <Text style={[styles.statNumber, { color: colors.primary }]}>{stats.linked}</Text>
+            <Text style={styles.statLabel}>Linked</Text>
           </View>
         </View>
         <View style={styles.tradeRow}>
@@ -161,7 +177,7 @@ export default function WorkerListScreen({ navigation, token }) {
           placeholder="Search by name or phone..."
           value={search}
           onChangeText={setSearch}
-          placeholderTextColor="#aaa"
+          placeholderTextColor={colors.textLight}
         />
         {search.length > 0 && (
           <TouchableOpacity onPress={() => setSearch('')}>
@@ -172,7 +188,7 @@ export default function WorkerListScreen({ navigation, token }) {
 
       {/* ── Trade filter ── */}
       <Text style={styles.filterLabel}>Trade</Text>
-      <View style={styles.chipRow}>
+      <View style={common.optionRow}>
         {TRADES.map(t => (
           <TouchableOpacity
             key={t}
@@ -185,8 +201,8 @@ export default function WorkerListScreen({ navigation, token }) {
       </View>
 
       {/* ── Status filter ── */}
-      <Text style={styles.filterLabel}>Status</Text>
-      <View style={styles.chipRow}>
+      <Text style={[styles.filterLabel, { marginTop: 14 }]}>Status</Text>
+      <View style={common.optionRow}>
         {STATUSES.map(s => (
           <TouchableOpacity
             key={s}
@@ -199,8 +215,8 @@ export default function WorkerListScreen({ navigation, token }) {
       </View>
 
       {/* ── Sort ── */}
-      <Text style={styles.filterLabel}>Sort by</Text>
-      <View style={styles.chipRow}>
+      <Text style={[styles.filterLabel, { marginTop: 14 }]}>Sort by</Text>
+      <View style={common.optionRow}>
         {SORTS.map(s => (
           <TouchableOpacity
             key={s}
@@ -221,27 +237,27 @@ export default function WorkerListScreen({ navigation, token }) {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1A5276" />
+      <View style={common.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     )
   }
 
   return (
-    <View style={styles.container}>
+    <View style={common.screenContainer}>
       {/* ── Header ── */}
-      <View style={styles.header}>
+      <View style={common.header}>
         <View>
-          <Text style={styles.headerTitle}>Workers</Text>
-          <Text style={styles.headerSub}>
+          <Text style={typography.screenTitle}>Workers</Text>
+          <Text style={typography.screenSubtitle}>
             {stats.total} worker{stats.total !== 1 ? 's' : ''} · {stats.active} active
           </Text>
         </View>
         <TouchableOpacity
-          style={styles.addBtn}
+          style={common.addBtn}
           onPress={() => navigation.navigate('WorkerFormScreen', { worker: null, token })}
         >
-          <Text style={styles.addBtnText}>+ Add</Text>
+          <Text style={common.addBtnText}>+ Add</Text>
         </TouchableOpacity>
       </View>
 
@@ -254,9 +270,9 @@ export default function WorkerListScreen({ navigation, token }) {
         onRefresh={fetchWorkers}
         refreshing={loading}
         ListEmptyComponent={
-          <View style={styles.center}>
-            <Text style={styles.emptyIcon}>🔍</Text>
-            <Text style={styles.emptyText}>
+          <View style={common.center}>
+            <Text style={common.emptyIcon}>🔍</Text>
+            <Text style={typography.emptyText}>
               {workers.length === 0 ? 'No workers yet. Add one!' : 'No workers match your search.'}
             </Text>
           </View>
@@ -266,72 +282,36 @@ export default function WorkerListScreen({ navigation, token }) {
   )
 }
 
+// Only screen-specific styles remain here
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: '#f5f5f5' },
-  center:      { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 40 },
+  cardTop:  { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  cardInfo: { flex: 1 },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
 
-  // Header
-  header: {
-    backgroundColor: '#1A5276',
-    paddingTop: 54, paddingBottom: 20, paddingHorizontal: 20,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end',
-  },
-  headerTitle: { fontSize: 28, fontWeight: '800', color: '#fff' },
-  headerSub:   { fontSize: 13, color: '#AED6F1', marginTop: 2 },
-  addBtn:      { backgroundColor: '#2E86C1', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 20 },
-  addBtnText:  { color: '#fff', fontWeight: '700', fontSize: 14 },
+  badgeLinked:     { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, backgroundColor: colors.primaryLight },
+  badgeLinkedText: { fontSize: 11, fontWeight: '500', color: colors.primary },
 
-  // Stats card
-  statsCard:   { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 16, elevation: 2 },
+  statsCard:   { backgroundColor: colors.card, borderRadius: 12, padding: 16, marginBottom: 16, elevation: 2 },
   statsRow:    { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 14 },
   statItem:    { alignItems: 'center' },
-  statNumber:  { fontSize: 28, fontWeight: '800', color: '#1A5276' },
-  statLabel:   { fontSize: 12, color: '#888', marginTop: 2 },
-  statDivider: { width: 1, backgroundColor: '#eee' },
-  tradeRow:    { flexDirection: 'row', justifyContent: 'space-around', paddingTop: 12, borderTopWidth: 1, borderTopColor: '#f0f0f0' },
+  statNumber:  { fontSize: 28, fontWeight: '800', color: colors.primary },
+  statLabel:   { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+  statDivider: { width: 1, backgroundColor: colors.borderLight },
+  tradeRow:    { flexDirection: 'row', justifyContent: 'space-around', paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.borderLight },
   tradeItem:   { alignItems: 'center' },
-  tradeCount:  { fontSize: 18, fontWeight: '700', color: '#1A5276' },
-  tradeLabel:  { fontSize: 11, color: '#888', marginTop: 2 },
+  tradeCount:  { fontSize: 18, fontWeight: '700', color: colors.primary },
+  tradeLabel:  { fontSize: 11, color: colors.textMuted, marginTop: 2 },
 
-  // Search
-  searchBox:   { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 16, elevation: 1 },
+  searchBox:   { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 16, elevation: 1 },
   searchIcon:  { fontSize: 16, marginRight: 8 },
-  searchInput: { flex: 1, fontSize: 14, color: '#333' },
-  clearSearch: { fontSize: 14, color: '#aaa', paddingLeft: 8 },
+  searchInput: { flex: 1, fontSize: 14, color: colors.textDark },
+  clearSearch: { fontSize: 14, color: colors.textLight, paddingLeft: 8 },
 
-  // Filter chips
-  filterLabel: { fontSize: 12, color: '#888', fontWeight: '600', marginBottom: 6 },
-  chipRow:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 14 },
-  chip:        { borderWidth: 1, borderColor: '#ddd', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: '#fff' },
-  chipActive:  { backgroundColor: '#1A5276', borderColor: '#1A5276' },
-  chipText:    { fontSize: 13, color: '#555' },
-  chipTextActive: { color: '#fff' },
+  filterLabel:    { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginBottom: 6 },
+  resultsText:    { fontSize: 12, color: colors.textMuted, marginBottom: 12, marginTop: 14 },
 
-  // Results count
-  resultsText: { fontSize: 12, color: '#888', marginBottom: 12 },
-
-  // Card
-  card:                 { backgroundColor: '#fff', borderRadius: 10, padding: 14, marginBottom: 10, elevation: 2 },
-  cardTop:              { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  photo:                { width: 56, height: 56, borderRadius: 8, marginRight: 12 },
-  photoPlaceholder:     { width: 56, height: 56, borderRadius: 8, backgroundColor: '#D6EAF8', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  photoPlaceholderText: { fontSize: 22, fontWeight: 'bold', color: '#1A5276' },
-  cardInfo:             { flex: 1 },
-  name:                 { fontSize: 15, fontWeight: '600', color: '#1B2631', marginBottom: 2 },
-  sub:                  { fontSize: 13, color: '#888', marginBottom: 6 },
-  badge:                { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  badgeGreen:           { backgroundColor: '#EAF3DE' },
-  badgeGray:            { backgroundColor: '#F1EFE8' },
-  badgeText:            { fontSize: 11, fontWeight: '500' },
-  badgeTextGreen:       { color: '#3B6D11' },
-  badgeTextGray:        { color: '#5F5E5A' },
-  cardActions:          { flexDirection: 'row', gap: 8, justifyContent: 'flex-end' },
-  editBtn:              { backgroundColor: '#D6EAF8', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 7 },
-  editBtnText:          { color: '#1A5276', fontSize: 13, fontWeight: '500' },
-  deleteBtn:            { backgroundColor: '#FCEBEB', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 7 },
-  deleteBtnText:        { color: '#A32D2D', fontSize: 13, fontWeight: '500' },
-
-  // Empty
-  emptyIcon: { fontSize: 40, marginBottom: 12 },
-  emptyText: { color: '#888', fontSize: 15, textAlign: 'center' },
+  chip:           { borderWidth: 1, borderColor: colors.border, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, backgroundColor: colors.card },
+  chipActive:     { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText:       { fontSize: 13, color: '#555' },
+  chipTextActive: { color: colors.card },
 })

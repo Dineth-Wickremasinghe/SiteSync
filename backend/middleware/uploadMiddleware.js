@@ -13,7 +13,7 @@ const storage = new CloudinaryStorage({
   params: async (req, file) => {
     return {
       folder: 'sitesync',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'pdf', 'heic', 'heif'],
+      allowed_formats: ['jpg', 'jpeg', 'png', 'pdf', 'heic', 'heif','webp'],
       resource_type: 'auto'
     }
   }
