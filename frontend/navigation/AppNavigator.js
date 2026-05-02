@@ -15,6 +15,7 @@ import NoticeListScreen from '../screens/notices/NoticeListScreen'
 import NoticeFormScreen from '../screens/notices/NoticeFormScreen'
 import ReportListScreen from '../screens/reports/ReportListScreen'
 import ReportFormScreen from '../screens/reports/ReportFormScreen'
+import ReportDetailScreen from '../screens/reports/ReportDetailScreen'
 import IncidentListScreen from '../screens/incidents/IncidentListScreen'
 import IncidentFormScreen from '../screens/incidents/IncidentFormScreen'
 import ProfileScreen from '../screens/ProfileScreen'
@@ -86,14 +87,17 @@ function EquipmentStack({ token }) {
   )
 }
 
-function ReportsStack({ token }) {
+function ReportsStack({ token, role }) {
   return (
     <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen name="ReportListScreen" options={{ headerShown: false }}>
-        {props => <ReportListScreen {...props} token={token} />}
+        {props => <ReportListScreen {...props} token={token} role={role} />}
+      </Stack.Screen>
+      <Stack.Screen name="ReportDetailScreen" options={{ title: 'Report Details' }}>
+        {props => <ReportDetailScreen {...props} token={token} role={role} />}
       </Stack.Screen>
       <Stack.Screen name="ReportFormScreen" options={{ title: 'Report Details' }}>
-        {props => <ReportFormScreen {...props} token={token} />}
+        {props => <ReportFormScreen {...props} token={token} role={role} />}
       </Stack.Screen>
     </Stack.Navigator>
   )
@@ -139,7 +143,7 @@ function ProfileStack({ token, setToken }) {
 }
 
 // ── Worker tab navigator — Reports, Incidents, Notices, Profile only ──────────
-function WorkerTabs({ token, setToken }) {
+function WorkerTabs({ token, role, setToken }) {
   return (
     <Tab.Navigator 
     screenOptions={({ route }) => ({
@@ -165,7 +169,7 @@ function WorkerTabs({ token, setToken }) {
 }
 
 // ── Admin/Supervisor tab navigator — all screens ──────────────────────────────
-function AdminTabs({ token, setToken }) {
+function AdminTabs({ token, role, setToken }) {
   return (
     <Tab.Navigator 
      screenOptions={({ route }) => ({
@@ -188,7 +192,7 @@ function AdminTabs({ token, setToken }) {
       <Tab.Screen name="Workers"   children={() => <WorkersStack   token={token} />} />
       <Tab.Screen name="Projects"  children={() => <ProjectsStack  token={token} />} />
       <Tab.Screen name="Equipment" children={() => <EquipmentStack token={token} />} />
-      <Tab.Screen name="Reports"   children={() => <ReportsStack   token={token} />} />
+      <Tab.Screen name="Reports"   children={() => <ReportsStack   token={token} role={role} />} />
       <Tab.Screen name="Incidents" children={() => <IncidentsStack token={token} />} />
       <Tab.Screen name="Notices"   children={() => <NoticesStack   token={token} />} />
       <Tab.Screen name="Profile"   children={() => <ProfileStack   token={token} setToken={setToken} />} />
@@ -212,11 +216,11 @@ export default function AppNavigator() {
           </>
         ) : role === 'worker' ? (
           <Stack.Screen name="App">
-            {() => <WorkerTabs token={token} setToken={setToken} />}
+            {() => <WorkerTabs token={token} role={role} setToken={setToken} />}
           </Stack.Screen>
         ) : (
           <Stack.Screen name="App">
-            {() => <AdminTabs token={token} setToken={setToken} />}
+            {() => <AdminTabs token={token} role={role} setToken={setToken} />}
           </Stack.Screen>
         )}
       </Stack.Navigator>
