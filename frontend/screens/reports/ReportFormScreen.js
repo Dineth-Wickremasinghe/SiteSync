@@ -5,17 +5,19 @@ import {
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import api from '../../services/api'
+import { colors, common, typography } from '../../theme'
 
 export default function ReportFormScreen({ navigation, route }) {
   const { report, token } = route.params
   const editing = report !== null
 
   const [projectName, setProjectName] = useState(editing ? report.projectName : '')
-  const [reportDate,  setReportDate]  = useState(editing ? report.reportDate  : '')
+  const [reportDate,  setReportDate]  = useState(editing ? report.reportDate.substring(0, 10) : new Date().toISOString().substring(0, 10))
   const [workDone,    setWorkDone]    = useState(editing ? report.workDone    : '')
   const [workerCount, setWorkerCount] = useState(editing ? String(report.workerCount) : '')
   const [photo,       setPhoto]       = useState(null)
   const [loading,     setLoading]     = useState(false)
+  const [errors,      setErrors]      = useState({})
 
   const pickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -28,17 +30,25 @@ export default function ReportFormScreen({ navigation, route }) {
     if (!result.canceled) setPhoto(result.assets[0])
   }
 
+  const validate = () => {
+    const e = {}
+    if (!projectName.trim()) e.projectName = 'Project name is required'
+    if (!reportDate.trim())  e.reportDate  = 'Report date is required'
+    if (!workDone.trim())    e.workDone    = 'Work done description is required'
+    if (!workerCount.trim()) e.workerCount = 'Worker count is required'
+    else if (isNaN(workerCount) || Number(workerCount) < 0) e.workerCount = 'Enter a valid number'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
   const handleSave = async () => {
-    if (!projectName || !reportDate || !workDone || !workerCount) {
-      Alert.alert('Error', 'Please fill in all fields')
-      return
-    }
+    if (!validate()) return
     try {
       setLoading(true)
       const formData = new FormData()
-      formData.append('projectName', projectName)
-      formData.append('reportDate',  reportDate)
-      formData.append('workDone',    workDone)
+      formData.append('projectName', projectName.trim())
+      formData.append('reportDate',  reportDate.trim())
+      formData.append('workDone',    workDone.trim())
       formData.append('workerCount', workerCount)
 
       if (photo) {
@@ -74,74 +84,112 @@ export default function ReportFormScreen({ navigation, route }) {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>{editing ? 'Edit Report' : 'Add Daily Report'}</Text>
+    <ScrollView style={common.formContainer}>
 
-      <Text style={styles.label}>Project Name</Text>
+      <Text style={typography.sectionTitle}>
+        {editing ? 'Edit Report' : 'Add Daily Report'}
+      </Text>
+
+      {/* Project Name */}
+      <Text style={typography.label}>
+        Project Name <Text style={{ color: colors.danger }}>*</Text>
+      </Text>
       <TextInput
-        style={styles.input}
+        style={[common.input, errors.projectName && common.inputError]}
         value={projectName}
-        onChangeText={setProjectName}
+        onChangeText={t => {
+          setProjectName(t)
+          if (errors.projectName) setErrors(e => ({ ...e, projectName: '' }))
+        }}
         placeholder="e.g. City Mall Construction"
+        placeholderTextColor={colors.textLight}
       />
+      {errors.projectName ? <Text style={typography.errorText}>{errors.projectName}</Text> : null}
 
-      <Text style={styles.label}>Report Date (YYYY-MM-DD)</Text>
+      {/* Report Date */}
+      <Text style={typography.label}>
+        Report Date <Text style={{ color: colors.danger }}>*</Text>
+      </Text>
       <TextInput
-        style={styles.input}
+        style={[common.input, errors.reportDate && common.inputError]}
         value={reportDate}
-        onChangeText={setReportDate}
-        placeholder="e.g. 2026-04-03"
+        onChangeText={t => {
+          setReportDate(t)
+          if (errors.reportDate) setErrors(e => ({ ...e, reportDate: '' }))
+        }}
+        placeholder="YYYY-MM-DD"
+        placeholderTextColor={colors.textLight}
         keyboardType="numbers-and-punctuation"
       />
+      {errors.reportDate ? <Text style={typography.errorText}>{errors.reportDate}</Text> : null}
 
-      <Text style={styles.label}>Work Done</Text>
+      {/* Work Done */}
+      <Text style={typography.label}>
+        Work Done <Text style={{ color: colors.danger }}>*</Text>
+      </Text>
       <TextInput
-        style={[styles.input, styles.textArea]}
+        style={[common.input, common.textArea, errors.workDone && common.inputError]}
         value={workDone}
-        onChangeText={setWorkDone}
+        onChangeText={t => {
+          setWorkDone(t)
+          if (errors.workDone) setErrors(e => ({ ...e, workDone: '' }))
+        }}
         placeholder="Describe work completed today..."
+        placeholderTextColor={colors.textLight}
         multiline
         numberOfLines={4}
       />
+      {errors.workDone ? <Text style={typography.errorText}>{errors.workDone}</Text> : null}
 
-      <Text style={styles.label}>Worker Count</Text>
+      {/* Worker Count */}
+      <Text style={typography.label}>
+        Worker Count <Text style={{ color: colors.danger }}>*</Text>
+      </Text>
       <TextInput
-        style={styles.input}
+        style={[common.input, errors.workerCount && common.inputError]}
         value={workerCount}
-        onChangeText={setWorkerCount}
+        onChangeText={t => {
+          setWorkerCount(t)
+          if (errors.workerCount) setErrors(e => ({ ...e, workerCount: '' }))
+        }}
         placeholder="e.g. 12"
+        placeholderTextColor={colors.textLight}
         keyboardType="numeric"
       />
+      {errors.workerCount ? <Text style={typography.errorText}>{errors.workerCount}</Text> : null}
 
-      <Text style={styles.label}>Progress Photo</Text>
-      <TouchableOpacity style={styles.uploadBtn} onPress={pickPhoto}>
-        <Text style={styles.uploadBtnText}>
+      {/* Photo */}
+      <Text style={typography.label}>Progress Photo</Text>
+      <TouchableOpacity style={common.uploadBtn} onPress={pickPhoto}>
+        <Text style={common.uploadBtnText}>
           {photo ? '✓ Photo selected' : '+ Select progress photo'}
         </Text>
       </TouchableOpacity>
       {photo && (
-        <Image source={{ uri: photo.uri }} style={styles.preview} />
+        <Image source={{ uri: photo.uri }} style={common.imagePreview} />
+      )}
+      {editing && report.reportPhoto && !photo && (
+        <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 6 }}>
+          Current photo will be kept if no new photo is selected
+        </Text>
       )}
 
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={loading}>
+      {/* Save */}
+      <TouchableOpacity
+        style={[common.primaryBtn, loading && { opacity: 0.6 }]}
+        onPress={handleSave}
+        disabled={loading}
+      >
         {loading
-          ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.saveBtnText}>{editing ? 'Update Report' : 'Save Report'}</Text>
+          ? <ActivityIndicator color={colors.background} />
+          : <Text style={common.primaryBtnText}>
+              {editing ? 'Update Report' : 'Save Report'}
+            </Text>
         }
       </TouchableOpacity>
+
     </ScrollView>
   )
 }
 
-const styles = StyleSheet.create({
-  container:        { flex: 1, backgroundColor: '#fff', padding: 20 },
-  title:            { fontSize: 22, fontWeight: 'bold', color: '#1A5276', marginBottom: 24 },
-  label:            { fontSize: 13, color: '#888', marginBottom: 6, marginTop: 12 },
-  input:            { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, fontSize: 15 },
-  textArea:         { height: 100, textAlignVertical: 'top' },
-  uploadBtn:        { borderWidth: 1, borderColor: '#1A5276', borderRadius: 8, padding: 12, alignItems: 'center', borderStyle: 'dashed', marginTop: 4 },
-  uploadBtnText:    { color: '#1A5276', fontSize: 14 },
-  preview:          { width: '100%', height: 180, borderRadius: 8, marginTop: 10 },
-  saveBtn:          { backgroundColor: '#1A5276', borderRadius: 8, padding: 14, alignItems: 'center', marginTop: 24, marginBottom: 40 },
-  saveBtnText:      { color: '#fff', fontSize: 15, fontWeight: '600' }
-})
+const styles = StyleSheet.create({})

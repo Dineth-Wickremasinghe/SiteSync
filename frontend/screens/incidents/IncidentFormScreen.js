@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import api from '../../services/api'
+import { colors, common, typography } from '../../theme'
 
 export default function IncidentFormScreen({ navigation, route }) {
   const { incident, token } = route.params
@@ -16,6 +17,7 @@ export default function IncidentFormScreen({ navigation, route }) {
   const [status,      setStatus]      = useState(editing ? incident.status      : 'Open')
   const [photo,       setPhoto]       = useState(null)
   const [loading,     setLoading]     = useState(false)
+  const [errors,      setErrors]      = useState({})
 
   const pickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -28,16 +30,21 @@ export default function IncidentFormScreen({ navigation, route }) {
     if (!result.canceled) setPhoto(result.assets[0])
   }
 
+  const validate = () => {
+    const e = {}
+    if (!title.trim())       e.title       = 'Title is required'
+    if (!description.trim()) e.description = 'Description is required'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
   const handleSave = async () => {
-    if (!title || !description) {
-      Alert.alert('Error', 'Please fill in all fields')
-      return
-    }
+    if (!validate()) return
     try {
       setLoading(true)
       const formData = new FormData()
-      formData.append('title',       title)
-      formData.append('description', description)
+      formData.append('title',       title.trim())
+      formData.append('description', description.trim())
       formData.append('severity',    severity)
       formData.append('status',      status)
 
@@ -67,7 +74,6 @@ export default function IncidentFormScreen({ navigation, route }) {
     } catch (error) {
       console.log('Save error:', error)
       console.log('Error response:', error.response?.data)
-      console.log('Error message:', error.message)
       Alert.alert('Error', error.response?.data?.message || error.message || 'Failed to save incident')
     } finally {
       setLoading(false)
@@ -75,87 +81,106 @@ export default function IncidentFormScreen({ navigation, route }) {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>{editing ? 'Edit Incident' : 'Report Incident'}</Text>
+    <ScrollView style={common.formContainer}>
 
-      <Text style={styles.label}>Title</Text>
+      <Text style={typography.sectionTitle}>
+        {editing ? 'Edit Incident' : 'Report Incident'}
+      </Text>
+
+      {/* Title */}
+      <Text style={typography.label}>
+        Title <Text style={{ color: colors.danger }}>*</Text>
+      </Text>
       <TextInput
-        style={styles.input}
+        style={[common.input, errors.title && common.inputError]}
         value={title}
-        onChangeText={setTitle}
+        onChangeText={t => {
+          setTitle(t)
+          if (errors.title) setErrors(e => ({ ...e, title: '' }))
+        }}
         placeholder="e.g. Worker injury on site"
+        placeholderTextColor={colors.textLight}
       />
+      {errors.title ? <Text style={typography.errorText}>{errors.title}</Text> : null}
 
-      <Text style={styles.label}>Description</Text>
+      {/* Description */}
+      <Text style={typography.label}>
+        Description <Text style={{ color: colors.danger }}>*</Text>
+      </Text>
       <TextInput
-        style={[styles.input, styles.textArea]}
+        style={[common.input, common.textArea, errors.description && common.inputError]}
         value={description}
-        onChangeText={setDescription}
+        onChangeText={t => {
+          setDescription(t)
+          if (errors.description) setErrors(e => ({ ...e, description: '' }))
+        }}
         placeholder="Describe the incident..."
+        placeholderTextColor={colors.textLight}
         multiline
         numberOfLines={4}
       />
+      {errors.description ? <Text style={typography.errorText}>{errors.description}</Text> : null}
 
-      <Text style={styles.label}>Severity</Text>
-      <View style={styles.optionRow}>
+      {/* Severity */}
+      <Text style={typography.label}>Severity</Text>
+      <View style={common.optionRow}>
         {['Low', 'Medium', 'High'].map(s => (
           <TouchableOpacity
             key={s}
-            style={[styles.option, severity === s && styles.optionActive]}
+            style={[common.option, severity === s && common.optionActive]}
             onPress={() => setSeverity(s)}
           >
-            <Text style={[styles.optionText, severity === s && styles.optionTextActive]}>{s}</Text>
+            <Text style={[common.optionText, severity === s && common.optionTextActive]}>{s}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text style={styles.label}>Status</Text>
-      <View style={styles.optionRow}>
+      {/* Status */}
+      <Text style={typography.label}>Status</Text>
+      <View style={common.optionRow}>
         {['Open', 'Resolved'].map(s => (
           <TouchableOpacity
             key={s}
-            style={[styles.option, status === s && styles.optionActive]}
+            style={[common.option, status === s && common.optionActive]}
             onPress={() => setStatus(s)}
           >
-            <Text style={[styles.optionText, status === s && styles.optionTextActive]}>{s}</Text>
+            <Text style={[common.optionText, status === s && common.optionTextActive]}>{s}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text style={styles.label}>Incident Photo</Text>
-      <TouchableOpacity style={styles.uploadBtn} onPress={pickPhoto}>
-        <Text style={styles.uploadBtnText}>
-          {photo ? 'Photo selected' : '+ Select incident photo'}
+      {/* Photo */}
+      <Text style={typography.label}>Incident Photo</Text>
+      <TouchableOpacity style={common.uploadBtn} onPress={pickPhoto}>
+        <Text style={common.uploadBtnText}>
+          {photo ? '✓ Photo selected' : '+ Select incident photo'}
         </Text>
       </TouchableOpacity>
       {photo && (
-        <Image source={{ uri: photo.uri }} style={styles.preview} />
+        <Image source={{ uri: photo.uri }} style={common.imagePreview} />
+      )}
+      {editing && incident.incidentImg && !photo && (
+        <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 6 }}>
+          Current photo will be kept if no new photo is selected
+        </Text>
       )}
 
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={loading}>
+      {/* Save */}
+      <TouchableOpacity
+        style={[common.primaryBtn, loading && { opacity: 0.6 }]}
+        onPress={handleSave}
+        disabled={loading}
+      >
         {loading
-          ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.saveBtnText}>{editing ? 'Update Incident' : 'Report Incident'}</Text>
+          ? <ActivityIndicator color={colors.background} />
+          : <Text style={common.primaryBtnText}>
+              {editing ? 'Update Incident' : 'Report Incident'}
+            </Text>
         }
       </TouchableOpacity>
+
     </ScrollView>
   )
 }
 
-const styles = StyleSheet.create({
-  container:        { flex: 1, backgroundColor: '#fff', padding: 20 },
-  title:            { fontSize: 22, fontWeight: 'bold', color: '#1A5276', marginBottom: 24 },
-  label:            { fontSize: 13, color: '#888', marginBottom: 6, marginTop: 12 },
-  input:            { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, fontSize: 15 },
-  textArea:         { height: 100, textAlignVertical: 'top' },
-  optionRow:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  option:           { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
-  optionActive:     { backgroundColor: '#1A5276', borderColor: '#1A5276' },
-  optionText:       { color: '#555', fontSize: 13 },
-  optionTextActive: { color: '#fff' },
-  uploadBtn:        { borderWidth: 1, borderColor: '#1A5276', borderRadius: 8, padding: 12, alignItems: 'center', borderStyle: 'dashed', marginTop: 4 },
-  uploadBtnText:    { color: '#1A5276', fontSize: 14 },
-  preview:          { width: '100%', height: 180, borderRadius: 8, marginTop: 10 },
-  saveBtn:          { backgroundColor: '#1A5276', borderRadius: 8, padding: 14, alignItems: 'center', marginTop: 24, marginBottom: 40 },
-  saveBtnText:      { color: '#fff', fontSize: 15, fontWeight: '600' }
-})
+const styles = StyleSheet.create({})

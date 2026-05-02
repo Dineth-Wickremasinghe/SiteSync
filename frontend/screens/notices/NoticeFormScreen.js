@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import api from '../../services/api'
+import { colors, common, typography } from '../../theme'
 
 const CATEGORIES = ['Safety', 'Schedule', 'General']
 
@@ -24,6 +25,7 @@ export default function NoticeFormScreen({ navigation, route }) {
   const [postedBy, setPostedBy] = useState(editing ? notice.postedBy : '')
   const [photo,    setPhoto]    = useState(null)
   const [loading,  setLoading]  = useState(false)
+  const [errors,   setErrors]   = useState({})
 
   const pickPhoto = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -36,18 +38,24 @@ export default function NoticeFormScreen({ navigation, route }) {
     if (!result.canceled) setPhoto(result.assets[0])
   }
 
+  const validate = () => {
+    const e = {}
+    if (!title.trim())    e.title    = 'Title is required'
+    if (!message.trim())  e.message  = 'Message is required'
+    if (!postedBy.trim()) e.postedBy = 'Posted by is required'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
   const handleSave = async () => {
-    if (!title || !message || !postedBy) {
-      Alert.alert('Error', 'Please fill in all required fields')
-      return
-    }
+    if (!validate()) return
     try {
       setLoading(true)
       const formData = new FormData()
-      formData.append('title',    title)
-      formData.append('message',  message)
+      formData.append('title',    title.trim())
+      formData.append('message',  message.trim())
       formData.append('category', category)
-      formData.append('postedBy', postedBy)
+      formData.append('postedBy', postedBy.trim())
 
       if (photo) {
         formData.append('noticeImage', {
@@ -84,99 +92,125 @@ export default function NoticeFormScreen({ navigation, route }) {
   const accentColor = CATEGORY_ACCENT[category]
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>{editing ? 'Edit Notice' : 'New Notice'}</Text>
+    <ScrollView style={common.formContainer}>
 
-      <Text style={styles.label}>Title</Text>
+      <Text style={typography.sectionTitle}>
+        {editing ? 'Edit Notice' : 'New Notice'}
+      </Text>
+
+      {/* Title */}
+      <Text style={typography.label}>
+        Title <Text style={{ color: colors.danger }}>*</Text>
+      </Text>
       <TextInput
-        style={styles.input}
+        style={[common.input, errors.title && common.inputError]}
         value={title}
-        onChangeText={setTitle}
+        onChangeText={t => {
+          setTitle(t)
+          if (errors.title) setErrors(e => ({ ...e, title: '' }))
+        }}
         placeholder="e.g. Site Safety Briefing"
+        placeholderTextColor={colors.textLight}
       />
+      {errors.title ? <Text style={typography.errorText}>{errors.title}</Text> : null}
 
-      <Text style={styles.label}>Message</Text>
+      {/* Message */}
+      <Text style={typography.label}>
+        Message <Text style={{ color: colors.danger }}>*</Text>
+      </Text>
       <TextInput
-        style={[styles.input, styles.textArea]}
+        style={[common.input, common.textArea, errors.message && common.inputError]}
         value={message}
-        onChangeText={setMessage}
+        onChangeText={t => {
+          setMessage(t)
+          if (errors.message) setErrors(e => ({ ...e, message: '' }))
+        }}
         placeholder="Write the notice content here..."
+        placeholderTextColor={colors.textLight}
         multiline
         numberOfLines={5}
       />
+      {errors.message ? <Text style={typography.errorText}>{errors.message}</Text> : null}
 
-      <Text style={styles.label}>Category</Text>
-      <View style={styles.optionRow}>
+      {/* Category */}
+      <Text style={typography.label}>Category</Text>
+      <View style={common.optionRow}>
         {CATEGORIES.map(cat => (
           <TouchableOpacity
             key={cat}
             style={[
-              styles.option,
-              category === cat && { backgroundColor: CATEGORY_ACCENT[cat], borderColor: CATEGORY_ACCENT[cat] }
+              common.option,
+              category === cat && {
+                backgroundColor: CATEGORY_ACCENT[cat],
+                borderColor:     CATEGORY_ACCENT[cat]
+              }
             ]}
             onPress={() => setCategory(cat)}
           >
-            <Text style={[styles.optionText, category === cat && styles.optionTextActive]}>
+            <Text style={[common.optionText, category === cat && common.optionTextActive]}>
               {cat}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text style={styles.label}>Posted By</Text>
+      {/* Posted By */}
+      <Text style={typography.label}>
+        Posted By <Text style={{ color: colors.danger }}>*</Text>
+      </Text>
       <TextInput
-        style={styles.input}
+        style={[common.input, errors.postedBy && common.inputError]}
         value={postedBy}
-        onChangeText={setPostedBy}
+        onChangeText={t => {
+          setPostedBy(t)
+          if (errors.postedBy) setErrors(e => ({ ...e, postedBy: '' }))
+        }}
         placeholder="e.g. Site Manager"
+        placeholderTextColor={colors.textLight}
       />
+      {errors.postedBy ? <Text style={typography.errorText}>{errors.postedBy}</Text> : null}
 
-      <Text style={styles.label}>Notice Image</Text>
-      <TouchableOpacity style={styles.uploadBtn} onPress={pickPhoto}>
-        <Text style={styles.uploadBtnText}>
-          {photo ? 'Photo selected' : '+ Select notice image'}
+      {/* Notice Image */}
+      <Text style={typography.label}>Notice Image</Text>
+      <TouchableOpacity style={common.uploadBtn} onPress={pickPhoto}>
+        <Text style={common.uploadBtnText}>
+          {photo ? '✓ Photo selected' : '+ Select notice image'}
         </Text>
       </TouchableOpacity>
       {photo && (
-        <Image source={{ uri: photo.uri }} style={styles.preview} />
+        <Image source={{ uri: photo.uri }} style={common.imagePreview} />
       )}
-      {!photo && editing && notice.noticeImage ? (
-        <Image source={{ uri: notice.noticeImage }} style={styles.preview} />
-      ) : null}
+      {!photo && editing && notice.noticeImage && (
+        <Image source={{ uri: notice.noticeImage }} style={common.imagePreview} />
+      )}
 
+      {/* Save */}
       <TouchableOpacity
-        style={[styles.saveBtn, { backgroundColor: accentColor }]}
+        style={[common.primaryBtn, { backgroundColor: accentColor }, loading && { opacity: 0.6 }]}
         onPress={handleSave}
         disabled={loading}
       >
         {loading
           ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.saveBtnText}>{editing ? 'Update Notice' : 'Post Notice'}</Text>
+          : <Text style={common.primaryBtnText}>
+              {editing ? 'Update Notice' : 'Post Notice'}
+            </Text>
         }
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()} disabled={loading}>
+      <TouchableOpacity
+        style={styles.cancelBtn}
+        onPress={() => navigation.goBack()}
+        disabled={loading}
+      >
         <Text style={styles.cancelText}>Cancel</Text>
       </TouchableOpacity>
+
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  container:       { flex: 1, backgroundColor: '#fff', padding: 20 },
-  title:           { fontSize: 22, fontWeight: 'bold', color: '#0F172A', marginBottom: 24 },
-  label:           { fontSize: 13, color: '#888', marginBottom: 6, marginTop: 12 },
-  input:           { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, fontSize: 15 },
-  textArea:        { height: 110, textAlignVertical: 'top' },
-  optionRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  option:          { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
-  optionText:      { color: '#555', fontSize: 13 },
-  optionTextActive:{ color: '#fff' },
-  uploadBtn:       { borderWidth: 1, borderColor: '#1A5276', borderRadius: 8, padding: 12, alignItems: 'center', borderStyle: 'dashed', marginTop: 4 },
-  uploadBtnText:   { color: '#1A5276', fontSize: 14 },
-  preview:         { width: '100%', height: 180, borderRadius: 8, marginTop: 10 },
-  saveBtn:         { borderRadius: 8, padding: 14, alignItems: 'center', marginTop: 24 },
-  saveBtnText:     { color: '#fff', fontSize: 15, fontWeight: '600' },
-  cancelBtn:       { marginTop: 12, alignItems: 'center', paddingVertical: 12, marginBottom: 40 },
-  cancelText:      { fontSize: 15, color: '#94A3B8', fontWeight: '500' },
+  cancelBtn:  { marginTop: 12, alignItems: 'center', paddingVertical: 12, marginBottom: 40 },
+  cancelText: { fontSize: 15, color: colors.textMuted, fontWeight: '500' },
 })

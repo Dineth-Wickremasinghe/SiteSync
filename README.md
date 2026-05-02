@@ -1,6 +1,9 @@
 # SiteSync — Construction Site Management System
 
-A full-stack mobile application for managing construction site operations, built as a group assignment for **SE2020 Web and Mobile Technologies** (Year 2, Semester 2, 2026) at SLIIT.
+SiteSync is a full-stack mobile application developed for the SE2020 – Web and Mobile Technologies module at SLIIT. It digitises day-to-day construction site operations that are traditionally managed through paper-based systems, providing a centralised, role-based platform accessible from any mobile device.
+The application supports two user roles; Supervisors and Workers and covers seven core modules: worker management, project tracking, equipment inventory, daily site reports, incident reporting, and site notices. All file uploads including ID scans, blueprints, progress photos, and timesheets are stored on Cloudinary.
+Built using React Native (Expo) for the frontend and Node.js + Express.js for the backend, with MongoDB Atlas as the cloud database and hosted on Azure.
+
 
 ---
 
@@ -61,7 +64,8 @@ SiteSync/
     │   ├── workers/
     │   ├── projects/
     │   ├── equipment/
-    │   ├── reports/
+    │   │   ├── EquipmentFormScreen.js
+    │   │   └── EquipmentListScreen.js
     │   ├── incidents/
     │   ├── notices/
     │   └── ProfileScreen.js
@@ -156,6 +160,8 @@ All routes are prefixed with `/api`.
 ---
 
 ## Getting Started
+GitHub Repository: https://github.com/Dineth-Wickremasinghe/SiteSync
+
 
 ### Prerequisites
 - Node.js 22+

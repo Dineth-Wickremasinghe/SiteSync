@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import api from '../../services/api'
+import { colors, common, typography } from '../../theme'
 
 export default function IncidentListScreen({ navigation, token }) {
   const [incidents, setIncidents] = useState([])
@@ -24,11 +25,7 @@ export default function IncidentListScreen({ navigation, token }) {
     }
   }
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchIncidents()
-    }, [])
-  )
+  useFocusEffect(useCallback(() => { fetchIncidents() }, []))
 
   const deleteIncident = async (id) => {
     Alert.alert('Confirm', 'Delete this incident?', [
@@ -53,51 +50,55 @@ export default function IncidentListScreen({ navigation, token }) {
     switch (severity) {
       case 'High':   return { bg: '#FDEBD0', text: '#935116' }
       case 'Medium': return { bg: '#FEF9E7', text: '#9A7D0A' }
-      default:       return { bg: '#EAF3DE', text: '#3B6D11' }
+      default:       return { bg: colors.successLight, text: colors.success }
     }
   }
 
   const renderIncident = ({ item }) => {
     const severityStyle = getSeverityStyle(item.severity)
     return (
-      <View style={styles.card}>
+      <View style={common.card}>
         <View style={styles.cardTop}>
           {item.incidentImg ? (
-            <Image source={{ uri: item.incidentImg }} style={styles.photo} />
+            <Image source={{ uri: item.incidentImg }} style={common.photo} />
           ) : (
-            <View style={styles.photoPlaceholder}>
-              <Text style={styles.photoPlaceholderText}>⚠️</Text>
+            <View style={[common.photoPlaceholder, { backgroundColor: colors.dangerLight }]}>
+              <Text style={{ fontSize: 22 }}>⚠️</Text>
             </View>
           )}
           <View style={styles.cardInfo}>
-            <Text style={styles.name}>{item.title}</Text>
-            <Text style={styles.sub} numberOfLines={2}>{item.description}</Text>
+            <Text style={typography.cardTitle}>{item.title}</Text>
+            <Text style={typography.cardSubtitle} numberOfLines={2}>{item.description}</Text>
             <View style={styles.badgeRow}>
-              <View style={[styles.badge, { backgroundColor: severityStyle.bg }]}>
-                <Text style={[styles.badgeText, { color: severityStyle.text }]}>
+              <View style={[common.badge, { backgroundColor: severityStyle.bg }]}>
+                <Text style={[common.badgeText, { color: severityStyle.text }]}>
                   {item.severity}
                 </Text>
               </View>
-              <View style={[styles.badge, { backgroundColor: item.status === 'Resolved' ? '#EAF3DE' : '#FDEDEC' }]}>
-                <Text style={[styles.badgeText, { color: item.status === 'Resolved' ? '#3B6D11' : '#922B21' }]}>
+              <View style={[common.badge, {
+                backgroundColor: item.status === 'Resolved' ? colors.successLight : colors.dangerLight
+              }]}>
+                <Text style={[common.badgeText, {
+                  color: item.status === 'Resolved' ? colors.success : colors.danger
+                }]}>
                   {item.status}
                 </Text>
               </View>
             </View>
           </View>
         </View>
-        <View style={styles.cardActions}>
+        <View style={common.cardActions}>
           <TouchableOpacity
-            style={styles.editBtn}
-            onPress={() => navigation.navigate('IncidentForm', { incident: item, token })}
+            style={common.editBtn}
+            onPress={() => navigation.navigate('IncidentFormScreen', { incident: item, token })}
           >
-            <Text style={styles.editBtnText}>Edit</Text>
+            <Text style={common.editBtnText}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.deleteBtn}
+            style={common.deleteBtn}
             onPress={() => deleteIncident(item._id)}
           >
-            <Text style={styles.deleteBtnText}>Delete</Text>
+            <Text style={common.deleteBtnText}>Delete</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -106,31 +107,40 @@ export default function IncidentListScreen({ navigation, token }) {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1A5276" />
+      <View style={common.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     )
   }
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.addBtn}
-        onPress={() => navigation.navigate('IncidentForm', { incident: null, token })}
-      >
-        <Text style={styles.addBtnText}>+ Report Incident</Text>
-      </TouchableOpacity>
+    <View style={common.screenContainer}>
+      <View style={common.header}>
+        <View>
+          <Text style={typography.screenTitle}>Incidents</Text>
+          <Text style={typography.screenSubtitle}>
+            {incidents.length} incident{incidents.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={common.addBtn}
+          onPress={() => navigation.navigate('IncidentFormScreen', { incident: null, token })}
+        >
+          <Text style={common.addBtnText}>+ Report</Text>
+        </TouchableOpacity>
+      </View>
 
       {incidents.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyText}>No incidents reported yet.</Text>
+        <View style={common.center}>
+          <Text style={common.emptyIcon}>⚠️</Text>
+          <Text style={typography.emptyText}>No incidents reported yet.</Text>
         </View>
       ) : (
         <FlatList
           data={incidents}
           keyExtractor={item => item._id}
           renderItem={renderIncident}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
           onRefresh={fetchIncidents}
           refreshing={loading}
         />
@@ -140,25 +150,7 @@ export default function IncidentListScreen({ navigation, token }) {
 }
 
 const styles = StyleSheet.create({
-  container:            { flex: 1, backgroundColor: '#f5f5f5', padding: 16 },
-  center:               { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  addBtn:               { backgroundColor: '#1A5276', borderRadius: 8, padding: 14, alignItems: 'center', marginBottom: 16 },
-  addBtnText:           { color: '#fff', fontSize: 15, fontWeight: '600' },
-  card:                 { backgroundColor: '#fff', borderRadius: 10, padding: 14, marginBottom: 10 },
-  cardTop:              { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  photo:                { width: 56, height: 56, borderRadius: 8, marginRight: 12 },
-  photoPlaceholder:     { width: 56, height: 56, borderRadius: 8, backgroundColor: '#FDEDEC', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  photoPlaceholderText: { fontSize: 22 },
-  cardInfo:             { flex: 1 },
-  name:                 { fontSize: 15, fontWeight: '600', color: '#1B2631', marginBottom: 2 },
-  sub:                  { fontSize: 13, color: '#888', marginBottom: 6 },
-  badgeRow:             { flexDirection: 'row', gap: 6 },
-  badge:                { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  badgeText:            { fontSize: 11, fontWeight: '500' },
-  cardActions:          { flexDirection: 'row', gap: 8, justifyContent: 'flex-end' },
-  editBtn:              { backgroundColor: '#D6EAF8', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 7 },
-  editBtnText:          { color: '#1A5276', fontSize: 13, fontWeight: '500' },
-  deleteBtn:            { backgroundColor: '#FCEBEB', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 7 },
-  deleteBtnText:        { color: '#A32D2D', fontSize: 13, fontWeight: '500' },
-  emptyText:            { color: '#888', fontSize: 15 }
+  cardTop:  { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  cardInfo: { flex: 1 },
+  badgeRow: { flexDirection: 'row', gap: 6 },
 })

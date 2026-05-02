@@ -5,19 +5,18 @@ import {
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import api from '../services/api'
+import { colors, common, typography } from '../theme'
 
 export default function ProfileScreen({ token, setToken }) {
-  const [name, setName]               = useState('')
-  const [email, setEmail]             = useState('')
+  const [name,            setName]            = useState('')
+  const [email,           setEmail]           = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [profileImage, setProfileImage] = useState(null)
-  const [loading, setLoading]         = useState(false)
-  const [fetching, setFetching]       = useState(true)
+  const [newPassword,     setNewPassword]     = useState('')
+  const [profileImage,    setProfileImage]    = useState(null)
+  const [loading,         setLoading]         = useState(false)
+  const [fetching,        setFetching]        = useState(true)
 
-  useEffect(() => {
-    fetchProfile()
-  }, [])
+  useEffect(() => { fetchProfile() }, [])
 
   const fetchProfile = async () => {
     try {
@@ -39,7 +38,7 @@ export default function ProfileScreen({ token, setToken }) {
       return
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
@@ -48,39 +47,38 @@ export default function ProfileScreen({ token, setToken }) {
   }
 
   const handleUpdate = async () => {
-  setLoading(true)
-  try {
-    const formData = new FormData()
-    formData.append('name', name)
-    formData.append('email', email)
+    setLoading(true)
+    try {
+      const formData = new FormData()
+      formData.append('name',  name)
+      formData.append('email', email)
 
-    if (profileImage && profileImage.startsWith('file')) {
-      formData.append('profileImage', {
-        uri:  profileImage,
-        name: 'profile.jpg',
-        type: 'image/jpeg',
+      if (profileImage && profileImage.startsWith('file')) {
+        formData.append('profileImage', {
+          uri:  profileImage,
+          name: 'profile.jpg',
+          type: 'image/jpeg',
+        })
+      }
+
+      if (currentPassword && newPassword) {
+        formData.append('currentPassword', currentPassword)
+        formData.append('newPassword',     newPassword)
+      }
+
+      await api.put('/auth/profile', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       })
+
+      setCurrentPassword('')
+      setNewPassword('')
+      Alert.alert('Success', 'Profile updated')
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.message || err.message)
+    } finally {
+      setLoading(false)
     }
-
-    // Include passwords only if the user filled them in
-    if (currentPassword && newPassword) {
-      formData.append('currentPassword', currentPassword)
-      formData.append('newPassword', newPassword)
-    }
-
-    await api.put('/auth/profile', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-
-    setCurrentPassword('')
-    setNewPassword('')
-    Alert.alert('Success', 'Profile updated')
-  } catch (err) {
-    Alert.alert('Error', err.response?.data?.message || err.message)
-  } finally {
-    setLoading(false)
   }
-}
 
   const handleLogout = async () => {
     Alert.alert('Log out', 'Are you sure?', [
@@ -101,46 +99,57 @@ export default function ProfileScreen({ token, setToken }) {
 
   if (fetching) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+      <View style={common.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     )
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView style={common.screenContainer} contentContainerStyle={styles.content}>
+
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={typography.screenTitle}>Profile</Text>
+        <Text style={typography.screenSubtitle}>Manage your account</Text>
+      </View>
 
       {/* Avatar */}
       <TouchableOpacity onPress={pickImage} style={styles.avatarWrapper}>
-        {profileImage
-          ? <Image source={{ uri: profileImage }} style={styles.avatar} />
-          : <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarInitial}>{name?.[0]?.toUpperCase()}</Text>
-            </View>
-        }
-        <Text style={styles.avatarHint}>Tap to change photo</Text>
+        {profileImage ? (
+          <Image source={{ uri: profileImage }} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarInitial}>{name?.[0]?.toUpperCase()}</Text>
+          </View>
+        )}
+        <View style={styles.avatarHintRow}>
+          <Text style={styles.avatarHint}>Tap to change photo</Text>
+        </View>
       </TouchableOpacity>
 
-      {/* Info */}
+      {/* Account Info */}
       <Text style={styles.sectionLabel}>ACCOUNT INFO</Text>
       <View style={styles.card}>
         <View style={styles.field}>
-          <Text style={styles.label}>Name</Text>
+          <Text style={styles.fieldLabel}>Name</Text>
           <TextInput
-            style={styles.input}
+            style={styles.fieldInput}
             value={name}
             onChangeText={setName}
             placeholder="Your name"
+            placeholderTextColor={colors.textLight}
           />
         </View>
         <View style={styles.divider} />
         <View style={styles.field}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.fieldLabel}>Email</Text>
           <TextInput
-            style={styles.input}
+            style={styles.fieldInput}
             value={email}
             onChangeText={setEmail}
             placeholder="Your email"
+            placeholderTextColor={colors.textLight}
             keyboardType="email-address"
             autoCapitalize="none"
           />
@@ -148,47 +157,47 @@ export default function ProfileScreen({ token, setToken }) {
       </View>
 
       <TouchableOpacity
-        style={styles.btn}
+        style={[common.primaryBtn, loading && { opacity: 0.6 }]}
         onPress={handleUpdate}
         disabled={loading}
       >
         {loading
-          ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.btnText}>Save changes</Text>
+          ? <ActivityIndicator color={colors.background} />
+          : <Text style={common.primaryBtnText}>Save Changes</Text>
         }
       </TouchableOpacity>
 
-      {/* Password */}
+      {/* Change Password */}
       <Text style={styles.sectionLabel}>CHANGE PASSWORD</Text>
       <View style={styles.card}>
         <View style={styles.field}>
-          <Text style={styles.label}>Current password</Text>
+          <Text style={styles.fieldLabel}>Current password</Text>
           <TextInput
-            style={styles.input}
+            style={styles.fieldInput}
             value={currentPassword}
             onChangeText={setCurrentPassword}
             secureTextEntry
             placeholder="••••••••"
+            placeholderTextColor={colors.textLight}
           />
         </View>
         <View style={styles.divider} />
         <View style={styles.field}>
-          <Text style={styles.label}>New password</Text>
+          <Text style={styles.fieldLabel}>New password</Text>
           <TextInput
-            style={styles.input}
+            style={styles.fieldInput}
             value={newPassword}
             onChangeText={setNewPassword}
             secureTextEntry
             placeholder="••••••••"
+            placeholderTextColor={colors.textLight}
           />
         </View>
       </View>
 
-      
-
       {/* Logout */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Log out</Text>
+        <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
 
     </ScrollView>
@@ -196,72 +205,118 @@ export default function ProfileScreen({ token, setToken }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
+  content: {
     paddingBottom: 48,
-    backgroundColor: '#f5f5f5',
   },
-  centered: {
-    flex: 1, justifyContent: 'center', alignItems: 'center'
+
+  // Header
+  header: {
+    backgroundColor: colors.background,
+    paddingTop: 54,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: colors.primary,
+    marginBottom: 24,
   },
+
+  // Avatar
   avatarWrapper: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  avatar: {
-    width: 90, height: 90, borderRadius: 45, marginBottom: 8,
-  },
-  avatarPlaceholder: {
-    width: 90, height: 90, borderRadius: 45,
-    backgroundColor: '#ddd',
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 8,
-  },
-  avatarInitial: {
-    fontSize: 36, fontWeight: '500', color: '#888',
-  },
-  avatarHint: {
-    fontSize: 13, color: '#999',
-  },
-  sectionLabel: {
-    fontSize: 11, fontWeight: '600', color: '#999',
-    letterSpacing: 0.8, marginBottom: 8, marginLeft: 4,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  field: {
-    paddingHorizontal: 16, paddingVertical: 12,
-  },
-  label: {
-    fontSize: 12, color: '#999', marginBottom: 4,
-  },
-  input: {
-    fontSize: 15, color: '#111',
-  },
-  divider: {
-    height: 1, backgroundColor: '#f0f0f0', marginLeft: 16,
-  },
-  btn: {
-    backgroundColor: '#111',
-    borderRadius: 10,
-    paddingVertical: 14,
     alignItems: 'center',
     marginBottom: 28,
   },
-  btnText: {
-    color: '#fff', fontSize: 15, fontWeight: '500',
+  avatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: colors.primary,
   },
+  avatarPlaceholder: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: colors.inputBg,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  avatarInitial: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  avatarHintRow: {
+    backgroundColor: colors.primaryLight,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  avatarHint: {
+    fontSize: 12,
+    color: colors.primaryDark,
+    fontWeight: '500',
+  },
+
+  // Section label
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.primary,
+    letterSpacing: 1,
+    marginBottom: 8,
+    marginLeft: 20,
+  },
+
+  // Card
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    marginBottom: 16,
+    marginHorizontal: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  field: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  fieldLabel: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginBottom: 4,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  fieldInput: {
+    fontSize: 15,
+    color: colors.textDark,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginLeft: 16,
+  },
+
+  // Logout
   logoutBtn: {
-    borderWidth: 1, borderColor: '#e74c3c',
-    borderRadius: 10, paddingVertical: 14,
-    alignItems: 'center', marginTop: 8,
+    borderWidth: 1.5,
+    borderColor: colors.danger,
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 8,
+    marginHorizontal: 20,
+    marginBottom: 20,
   },
   logoutText: {
-    color: '#e74c3c', fontSize: 15, fontWeight: '500',
+    color: colors.danger,
+    fontSize: 15,
+    fontWeight: '600',
   },
 })
-

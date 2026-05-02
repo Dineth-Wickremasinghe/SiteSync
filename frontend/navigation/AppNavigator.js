@@ -18,17 +18,34 @@ import ReportFormScreen from '../screens/reports/ReportFormScreen'
 import IncidentListScreen from '../screens/incidents/IncidentListScreen'
 import IncidentFormScreen from '../screens/incidents/IncidentFormScreen'
 import ProfileScreen from '../screens/ProfileScreen'
+import { colors } from '../theme'
 
 const Stack = createNativeStackNavigator()
 const Tab   = createBottomTabNavigator()
 
+const stackScreenOptions = {
+  headerStyle:            { backgroundColor: colors.background },
+  headerTintColor:        colors.primary,
+  headerTitleStyle:       { fontWeight: '700', fontSize: 17, color: colors.textDark },
+  headerBackTitleVisible: false,
+  contentStyle:           { backgroundColor: colors.background },
+}
+
+const tabBarOptions = {
+  headerShown:             false,
+  tabBarStyle:             { backgroundColor: colors.card, borderTopColor: colors.primary, borderTopWidth: 2 },
+  tabBarActiveTintColor:   colors.primary,
+  tabBarInactiveTintColor: colors.textMuted,
+  tabBarLabelStyle:        { fontSize: 11, fontWeight: '600' },
+}
+
 function WorkersStack({ token }) {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="WorkerListScreen">
+    <Stack.Navigator screenOptions={stackScreenOptions}>
+      <Stack.Screen name="WorkerListScreen" options={{ headerShown: false }}>
         {props => <WorkerListScreen {...props} token={token} />}
       </Stack.Screen>
-      <Stack.Screen name="WorkerFormScreen">
+      <Stack.Screen name="WorkerFormScreen" options={{ title: 'Worker Details' }}>
         {props => <WorkerFormScreen {...props} token={token} />}
       </Stack.Screen>
     </Stack.Navigator>
@@ -37,19 +54,8 @@ function WorkersStack({ token }) {
 
 function ProjectsStack({ token }) {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle:          { backgroundColor: '#1B4332' },
-        headerTintColor:      '#FFFFFF',
-        headerTitleStyle:     { fontWeight: '700', fontSize: 17 },
-        headerBackTitleVisible: false,
-        contentStyle:         { backgroundColor: '#F4F6F4' },
-      }}
-    >
-      <Stack.Screen
-        name="ProjectList"
-        options={{ headerShown: false }}
-      >
+    <Stack.Navigator screenOptions={stackScreenOptions}>
+      <Stack.Screen name="ProjectList" options={{ headerShown: false }}>
         {props => <ProjectListScreen {...props} token={token} />}
       </Stack.Screen>
       <Stack.Screen
@@ -58,10 +64,7 @@ function ProjectsStack({ token }) {
       >
         {props => <ProjectFormScreen {...props} token={token} />}
       </Stack.Screen>
-      <Stack.Screen
-        name="ProjectDetail"
-        options={{ title: 'Project Details' }}
-      >
+      <Stack.Screen name="ProjectDetail" options={{ title: 'Project Details' }}>
         {props => <ProjectDetailScreen {...props} token={token} />}
       </Stack.Screen>
     </Stack.Navigator>
@@ -70,11 +73,11 @@ function ProjectsStack({ token }) {
 
 function EquipmentStack({ token }) {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="EquipmentListScreen">
+    <Stack.Navigator screenOptions={stackScreenOptions}>
+      <Stack.Screen name="EquipmentListScreen" options={{ headerShown: false }}>
         {props => <EquipmentListScreen {...props} token={token} />}
       </Stack.Screen>
-      <Stack.Screen name="EquipmentFormScreen">
+      <Stack.Screen name="EquipmentFormScreen" options={{ title: 'Equipment Details' }}>
         {props => <EquipmentFormScreen {...props} token={token} />}
       </Stack.Screen>
     </Stack.Navigator>
@@ -83,11 +86,11 @@ function EquipmentStack({ token }) {
 
 function ReportsStack({ token }) {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="ReportListScreen">
+    <Stack.Navigator screenOptions={stackScreenOptions}>
+      <Stack.Screen name="ReportListScreen" options={{ headerShown: false }}>
         {props => <ReportListScreen {...props} token={token} />}
       </Stack.Screen>
-      <Stack.Screen name="ReportFormScreen">
+      <Stack.Screen name="ReportFormScreen" options={{ title: 'Report Details' }}>
         {props => <ReportFormScreen {...props} token={token} />}
       </Stack.Screen>
     </Stack.Navigator>
@@ -96,11 +99,11 @@ function ReportsStack({ token }) {
 
 function IncidentsStack({ token }) {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="IncidentListScreen">
+    <Stack.Navigator screenOptions={stackScreenOptions}>
+      <Stack.Screen name="IncidentListScreen" options={{ headerShown: false }}>
         {props => <IncidentListScreen {...props} token={token} />}
       </Stack.Screen>
-      <Stack.Screen name="IncidentFormScreen">
+      <Stack.Screen name="IncidentFormScreen" options={{ title: 'Incident Details' }}>
         {props => <IncidentFormScreen {...props} token={token} />}
       </Stack.Screen>
     </Stack.Navigator>
@@ -109,11 +112,11 @@ function IncidentsStack({ token }) {
 
 function NoticesStack({ token }) {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="NoticeListScreen">
+    <Stack.Navigator screenOptions={stackScreenOptions}>
+      <Stack.Screen name="NoticeListScreen" options={{ headerShown: false }}>
         {props => <NoticeListScreen {...props} token={token} />}
       </Stack.Screen>
-      <Stack.Screen name="NoticeFormScreen">
+      <Stack.Screen name="NoticeFormScreen" options={{ title: 'Notice Details' }}>
         {props => <NoticeFormScreen {...props} token={token} />}
       </Stack.Screen>
     </Stack.Navigator>
@@ -122,17 +125,30 @@ function NoticesStack({ token }) {
 
 function ProfileStack({ token, setToken }) {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="ProfileScreen">
+    <Stack.Navigator screenOptions={stackScreenOptions}>
+      <Stack.Screen name="ProfileScreen" options={{ headerShown: false }}>
         {props => <ProfileScreen {...props} token={token} setToken={setToken} />}
       </Stack.Screen>
     </Stack.Navigator>
   )
 }
 
-function AppTabs({ token, setToken }) {
+// ── Worker tab navigator — Reports, Incidents, Notices, Profile only ──────────
+function WorkerTabs({ token, setToken }) {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator screenOptions={tabBarOptions}>
+      <Tab.Screen name="Reports"   children={() => <ReportsStack   token={token} />} />
+      <Tab.Screen name="Incidents" children={() => <IncidentsStack token={token} />} />
+      <Tab.Screen name="Notices"   children={() => <NoticesStack   token={token} />} />
+      <Tab.Screen name="Profile"   children={() => <ProfileStack   token={token} setToken={setToken} />} />
+    </Tab.Navigator>
+  )
+}
+
+// ── Admin/Supervisor tab navigator — all screens ──────────────────────────────
+function AdminTabs({ token, setToken }) {
+  return (
+    <Tab.Navigator screenOptions={tabBarOptions}>
       <Tab.Screen name="Workers"   children={() => <WorkersStack   token={token} />} />
       <Tab.Screen name="Projects"  children={() => <ProjectsStack  token={token} />} />
       <Tab.Screen name="Equipment" children={() => <EquipmentStack token={token} />} />
@@ -146,19 +162,25 @@ function AppTabs({ token, setToken }) {
 
 export default function AppNavigator() {
   const [token, setToken] = useState(null)
+  const [role,  setRole]  = useState(null)
+
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!token ? (
           <>
             <Stack.Screen name="Login">
-              {props => <LoginScreen {...props} setToken={setToken} />}
+              {props => <LoginScreen {...props} setToken={setToken} setRole={setRole} />}
             </Stack.Screen>
             <Stack.Screen name="Register" component={RegisterScreen} />
           </>
+        ) : role === 'worker' ? (
+          <Stack.Screen name="App">
+            {() => <WorkerTabs token={token} setToken={setToken} />}
+          </Stack.Screen>
         ) : (
           <Stack.Screen name="App">
-            {() => <AppTabs token={token} setToken={setToken} />}
+            {() => <AdminTabs token={token} setToken={setToken} />}
           </Stack.Screen>
         )}
       </Stack.Navigator>

@@ -1,53 +1,102 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, Alert, ActivityIndicator, ScrollView, Image
+  Alert, ActivityIndicator, ScrollView, Image, Modal, FlatList, StyleSheet
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import api from '../../services/api'
+import { colors, common, typography } from '../../theme'
 
 export default function WorkerFormScreen({ navigation, route }) {
   const { worker, token } = route.params
   const editing = worker !== null
 
-  const [name,   setName]   = useState(editing ? worker.name  : '')
-  const [phone,  setPhone]  = useState(editing ? worker.phone : '')
-  const [trade,  setTrade]  = useState(editing ? worker.trade : 'Mason')
-  const [status, setStatus] = useState(editing ? worker.status : 'Active')
-  const [photo,  setPhoto]  = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [name,          setName]          = useState(editing ? worker.name   : '')
+  const [phone,         setPhone]         = useState(editing ? worker.phone  : '')
+  const [trade,         setTrade]         = useState(editing ? worker.trade  : 'Mason')
+  const [status,        setStatus]        = useState(editing ? worker.status : 'Active')
+  const [photo,         setPhoto]         = useState(null)
+  const [loading,       setLoading]       = useState(false)
+  const [errors,        setErrors]        = useState({})
+  const [users,         setUsers]         = useState([])
+  const [usersLoading,  setUsersLoading]  = useState(false)
+  const [pickerVisible, setPickerVisible] = useState(false)
+  const [selectedUser,  setSelectedUser]  = useState(
+    editing && worker.userId
+      ? { _id: worker.userId._id || worker.userId, name: worker.userId.name, email: worker.userId.email }
+      : null
+  )
+  const [userSearch, setUserSearch] = useState('')
 
-  const pickPhoto = async () => {
-   const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    quality: 0.7,
-    allowsEditing: false,
-    exif: false,
-    base64: false,
-  })
-  if (!result.canceled) setPhoto(result.assets[0])
+  useEffect(() => { fetchUsers() }, [])
+
+  const fetchUsers = async () => {
+  try {
+    setUsersLoading(true)
+    const currentUserId = editing && worker.userId
+      ? worker.userId._id || worker.userId
+      : null
+
+    const url = currentUserId
+      ? `/auth/users?currentUserId=${currentUserId}`
+      : '/auth/users'
+
+    const res = await api.get(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    setUsers(res.data)
+  } catch (error) {
+    console.log('Failed to fetch users:', error)
+  } finally {
+    setUsersLoading(false)
+  }
 }
 
-  const handleSave = async () => {
-    if (!name || !phone || !trade) {
-      Alert.alert('Error', 'Please fill in all fields')
-      return
+  const pickPhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.7,
+      allowsEditing: false,
+      exif: false,
+      base64: false,
+    })
+    if (!result.canceled) setPhoto(result.assets[0])
+  }
+
+  const validate = () => {
+    const e = {}
+    if (!name.trim()) {
+      e.name = 'Full name is required'
+    } else if (name.trim().length < 3) {
+      e.name = 'Name must be at least 3 characters'
     }
+    if (!phone.trim()) {
+      e.phone = 'Phone number is required'
+    } else if (!/^0\d{9}$/.test(phone.trim())) {
+      e.phone = 'Enter a valid Sri Lankan number (e.g. 0771234567)'
+    }
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
+  const handleSave = async () => {
+    if (!validate()) return
     try {
       setLoading(true)
       const formData = new FormData()
-      formData.append('name',   name)
-      formData.append('phone',  phone)
+      formData.append('name',   name.trim())
+      formData.append('phone',  phone.trim())
       formData.append('trade',  trade)
       formData.append('status', status)
+      formData.append('userId', selectedUser ? selectedUser._id : '')
 
       if (photo) {
         formData.append('idPhoto', {
           uri:  photo.uri,
           type: 'image/jpeg',
           name: 'idphoto.jpg'
-  })
-}
+        })
+      }
 
       const config = {
         headers: {
@@ -65,84 +114,284 @@ export default function WorkerFormScreen({ navigation, route }) {
       Alert.alert('Success', editing ? 'Worker updated!' : 'Worker added!')
       navigation.goBack()
     } catch (error) {
-        console.log('Save error:', error)
-        console.log('Error response:', error.response?.data)
-        console.log('Error message:', error.message)
-        Alert.alert('Error', error.response?.data?.message || error.message || 'Failed to save worker')
+      console.log('Save error:', error)
+      Alert.alert('Error', error.response?.data?.message || error.message || 'Failed to save worker')
     } finally {
       setLoading(false)
     }
   }
 
+  const filteredUsers = users.filter(u =>
+    u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+    u.email.toLowerCase().includes(userSearch.toLowerCase())
+  )
+
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>{editing ? 'Edit Worker' : 'Add Worker'}</Text>
+    <ScrollView style={common.formContainer}>
 
-      <Text style={styles.label}>Full name</Text>
-      <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Kamal Perera" />
+      <Text style={typography.sectionTitle}>
+        {editing ? 'Edit Worker' : 'Add Worker'}
+      </Text>
 
-      <Text style={styles.label}>Phone</Text>
-      <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="0771234567" keyboardType="phone-pad" />
+      {/* Full Name */}
+      <Text style={typography.label}>
+        Full name <Text style={{ color: colors.danger }}>*</Text>
+      </Text>
+      <TextInput
+        style={[common.input, errors.name && common.inputError]}
+        value={name}
+        onChangeText={t => {
+          setName(t)
+          if (errors.name) setErrors(e => ({ ...e, name: '' }))
+        }}
+        placeholder="Kamal Perera"
+        placeholderTextColor={colors.textLight}
+      />
+      {errors.name ? <Text style={typography.errorText}>{errors.name}</Text> : null}
 
-      <Text style={styles.label}>Trade</Text>
-      <View style={styles.optionRow}>
+      {/* Phone */}
+      <Text style={typography.label}>
+        Phone <Text style={{ color: colors.danger }}>*</Text>
+      </Text>
+      <TextInput
+        style={[common.input, errors.phone && common.inputError]}
+        value={phone}
+        onChangeText={t => {
+          setPhone(t)
+          if (errors.phone) setErrors(e => ({ ...e, phone: '' }))
+        }}
+        placeholder="0771234567"
+        placeholderTextColor={colors.textLight}
+        keyboardType="phone-pad"
+        maxLength={10}
+      />
+      {errors.phone ? <Text style={typography.errorText}>{errors.phone}</Text> : null}
+
+      {/* Trade */}
+      <Text style={typography.label}>Trade</Text>
+      <View style={common.optionRow}>
         {['Mason', 'Electrician', 'Plumber', 'General'].map(t => (
           <TouchableOpacity
             key={t}
-            style={[styles.option, trade === t && styles.optionActive]}
+            style={[common.option, trade === t && common.optionActive]}
             onPress={() => setTrade(t)}
           >
-            <Text style={[styles.optionText, trade === t && styles.optionTextActive]}>{t}</Text>
+            <Text style={[common.optionText, trade === t && common.optionTextActive]}>{t}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text style={styles.label}>Status</Text>
-      <View style={styles.optionRow}>
+      {/* Status */}
+      <Text style={typography.label}>Status</Text>
+      <View style={common.optionRow}>
         {['Active', 'Inactive'].map(s => (
           <TouchableOpacity
             key={s}
-            style={[styles.option, status === s && styles.optionActive]}
+            style={[common.option, status === s && common.optionActive]}
             onPress={() => setStatus(s)}
           >
-            <Text style={[styles.optionText, status === s && styles.optionTextActive]}>{s}</Text>
+            <Text style={[common.optionText, status === s && common.optionTextActive]}>{s}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text style={styles.label}>ID Photo</Text>
-      <TouchableOpacity style={styles.uploadBtn} onPress={pickPhoto}>
-        <Text style={styles.uploadBtnText}>
-          {photo ? 'Photo selected' : '+ Select ID photo'}
+      {/* Link to User Account */}
+      <Text style={typography.label}>
+        Link to User Account{' '}
+        <Text style={{ color: colors.textLight, fontSize: 11 }}>(optional)</Text>
+      </Text>
+
+      <TouchableOpacity
+        style={[
+          styles.pickerBtn,
+          selectedUser && { borderColor: colors.primary, backgroundColor: colors.primaryLight }
+        ]}
+        onPress={() => setPickerVisible(true)}
+      >
+        {usersLoading ? (
+          <ActivityIndicator size="small" color={colors.primary} />
+        ) : selectedUser ? (
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 15, color: colors.primary, fontWeight: '600' }}>
+              {selectedUser.name}
+            </Text>
+            <Text style={{ fontSize: 12, color: colors.textMuted }}>{selectedUser.email}</Text>
+          </View>
+        ) : (
+          <Text style={{ color: colors.textLight, fontSize: 15 }}>Select a user account...</Text>
+        )}
+        <Text style={{ color: colors.textMuted, fontSize: 13, marginLeft: 8 }}>▾</Text>
+      </TouchableOpacity>
+
+      {selectedUser && (
+        <TouchableOpacity style={{ marginTop: 4 }} onPress={() => setSelectedUser(null)}>
+          <Text style={{ fontSize: 12, color: colors.danger }}>✕ Remove link</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* User Picker Modal */}
+      <Modal
+        visible={pickerVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setPickerVisible(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: colors.card }}>
+
+          {/* Modal header */}
+          <View style={styles.modalHeader}>
+            <Text style={{ fontSize: 17, fontWeight: '700', color: colors.primary }}>
+              Select User
+            </Text>
+            <TouchableOpacity onPress={() => setPickerVisible(false)}>
+              <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 15 }}>Done</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Search */}
+          <View style={styles.modalSearch}>
+            <Text style={{ marginRight: 8 }}>🔍</Text>
+            <TextInput
+              style={{ flex: 1, fontSize: 15, color: colors.textDark }}
+              placeholder="Search by name or email..."
+              placeholderTextColor={colors.textLight}
+              value={userSearch}
+              onChangeText={setUserSearch}
+              autoFocus
+            />
+          </View>
+
+          {/* User list */}
+          <FlatList
+            data={filteredUsers}
+            keyExtractor={item => item._id}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
+            ListEmptyComponent={
+              <View style={common.center}>
+                <Text style={typography.emptyText}>No users found</Text>
+              </View>
+            }
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.userRow,
+                  selectedUser?._id === item._id && {
+                    backgroundColor: colors.primaryLight,
+                    borderColor: colors.primary
+                  }
+                ]}
+                onPress={() => {
+                  setSelectedUser(item)
+                  setPickerVisible(false)
+                  setUserSearch('')
+                }}
+              >
+                <View style={styles.userAvatar}>
+                  <Text style={{ color: colors.primary, fontWeight: '700', fontSize: 15 }}>
+                    {item.name.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: colors.textDark }}>
+                    {item.name}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted }}>
+                    {item.email} · {item.role}
+                  </Text>
+                </View>
+                {selectedUser?._id === item._id && (
+                  <Text style={{ color: colors.primary, fontWeight: '700' }}>✓</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </Modal>
+
+      {/* ID Photo */}
+      <Text style={typography.label}>ID Photo</Text>
+      <TouchableOpacity style={common.uploadBtn} onPress={pickPhoto}>
+        <Text style={common.uploadBtnText}>
+          {photo ? '✓ Photo selected' : '+ Select ID photo'}
         </Text>
       </TouchableOpacity>
       {photo && (
-        <Image source={{ uri: photo.uri }} style={styles.preview} />
+        <Image source={{ uri: photo.uri }} style={common.imagePreview} />
+      )}
+      {editing && worker.idPhotoUrl && !photo && (
+        <Text style={{ fontSize: 12, color: colors.textLight, marginTop: 6 }}>
+          Current photo will be kept if no new photo is selected
+        </Text>
       )}
 
-      <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={loading}>
+      {/* Save Button */}
+      <TouchableOpacity
+        style={[common.primaryBtn, loading && { opacity: 0.6 }]}
+        onPress={handleSave}
+        disabled={loading}
+      >
         {loading
-          ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.saveBtnText}>{editing ? 'Update Worker' : 'Save Worker'}</Text>
+          ? <ActivityIndicator color={colors.card} />
+          : <Text style={common.primaryBtnText}>
+              {editing ? 'Update Worker' : 'Save Worker'}
+            </Text>
         }
       </TouchableOpacity>
+
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  container:         { flex: 1, backgroundColor: '#fff', padding: 20 },
-  title:             { fontSize: 22, fontWeight: 'bold', color: '#1A5276', marginBottom: 24 },
-  label:             { fontSize: 13, color: '#888', marginBottom: 6, marginTop: 12 },
-  input:             { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, padding: 12, fontSize: 15 },
-  optionRow:         { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  option:            { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
-  optionActive:      { backgroundColor: '#1A5276', borderColor: '#1A5276' },
-  optionText:        { color: '#555', fontSize: 13 },
-  optionTextActive:  { color: '#fff' },
-  uploadBtn:         { borderWidth: 1, borderColor: '#1A5276', borderRadius: 8, padding: 12, alignItems: 'center', borderStyle: 'dashed', marginTop: 4 },
-  uploadBtnText:     { color: '#1A5276', fontSize: 14 },
-  preview:           { width: '100%', height: 180, borderRadius: 8, marginTop: 10 },
-  saveBtn:           { backgroundColor: '#1A5276', borderRadius: 8, padding: 14, alignItems: 'center', marginTop: 24, marginBottom: 40 },
-  saveBtnText:       { color: '#fff', fontSize: 15, fontWeight: '600' }
+  pickerBtn: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+    backgroundColor: colors.card,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 48,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  modalSearch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.card,
+  },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
 })

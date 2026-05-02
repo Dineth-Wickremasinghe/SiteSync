@@ -5,10 +5,11 @@ import {
 } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import api from '../../services/api'
+import { colors, common, typography } from '../../theme'
 
 export default function EquipmentListScreen({ navigation, token }) {
   const [equipment, setEquipment] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading,   setLoading]   = useState(true)
 
   const fetchEquipment = async () => {
     try {
@@ -24,15 +25,10 @@ export default function EquipmentListScreen({ navigation, token }) {
     }
   }
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchEquipment()
-    }, [])
-  )
+  useFocusEffect(useCallback(() => { fetchEquipment() }, []))
 
   const deleteEquipment = async (id) => {
     if (Platform.OS === 'web') {
-      // web browser — use window.confirm instead of Alert
       const confirmed = window.confirm('Delete this equipment?')
       if (!confirmed) return
       try {
@@ -44,7 +40,6 @@ export default function EquipmentListScreen({ navigation, token }) {
         Alert.alert('Error', 'Failed to delete equipment')
       }
     } else {
-      // phone — use native Alert
       Alert.alert('Confirm', 'Delete this equipment?', [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -64,48 +59,47 @@ export default function EquipmentListScreen({ navigation, token }) {
     }
   }
 
-  // Badge color based on condition
   const getConditionStyle = (condition) => {
-    if (condition === 'Good')  return { bg: styles.badgeGreen,  text: styles.badgeTextGreen }
-    if (condition === 'Fair')  return { bg: styles.badgeYellow, text: styles.badgeTextYellow }
-    if (condition === 'Poor')  return { bg: styles.badgeRed,    text: styles.badgeTextRed }
-    return { bg: styles.badgeGray, text: styles.badgeTextGray }
+    if (condition === 'Good') return { bg: { backgroundColor: colors.successLight }, text: { color: colors.success } }
+    if (condition === 'Fair') return { bg: { backgroundColor: '#FEF9E7' },           text: { color: '#9A7D0A' } }
+    if (condition === 'Poor') return { bg: { backgroundColor: colors.dangerLight },  text: { color: colors.danger } }
+    return { bg: { backgroundColor: colors.borderLight }, text: { color: colors.textMuted } }
   }
 
   const renderEquipment = ({ item }) => {
     const condStyle = getConditionStyle(item.condition)
     return (
-      <View style={styles.card}>
+      <View style={common.card}>
         <View style={styles.cardTop}>
           {item.equipmentImg ? (
-            <Image source={{ uri: item.equipmentImg }} style={styles.photo} />
+            <Image source={{ uri: item.equipmentImg }} style={common.photo} />
           ) : (
-            <View style={styles.photoPlaceholder}>
-              <Text style={styles.photoPlaceholderText}>
+            <View style={common.photoPlaceholder}>
+              <Text style={common.photoPlaceholderText}>
                 {item.name.charAt(0).toUpperCase()}
               </Text>
             </View>
           )}
           <View style={styles.cardInfo}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.sub}>{item.type} · Qty: {item.quantity}</Text>
-            <View style={[styles.badge, condStyle.bg]}>
-              <Text style={[styles.badgeText, condStyle.text]}>{item.condition}</Text>
+            <Text style={typography.cardTitle}>{item.name}</Text>
+            <Text style={typography.cardSubtitle}>{item.type} · Qty: {item.quantity}</Text>
+            <View style={[common.badge, condStyle.bg]}>
+              <Text style={[common.badgeText, condStyle.text]}>{item.condition}</Text>
             </View>
           </View>
         </View>
-        <View style={styles.cardActions}>
+        <View style={common.cardActions}>
           <TouchableOpacity
-            style={styles.editBtn}
-            onPress={() => navigation.navigate('EquipmentForm', { equipment: item, token })}
+            style={common.editBtn}
+            onPress={() => navigation.navigate('EquipmentFormScreen', { equipment: item, token })}
           >
-            <Text style={styles.editBtnText}>Edit</Text>
+            <Text style={common.editBtnText}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.deleteBtn}
+            style={common.deleteBtn}
             onPress={() => deleteEquipment(item._id)}
           >
-            <Text style={styles.deleteBtnText}>Delete</Text>
+            <Text style={common.deleteBtnText}>Delete</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -114,31 +108,40 @@ export default function EquipmentListScreen({ navigation, token }) {
 
   if (loading) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1A5276" />
+      <View style={common.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     )
   }
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.addBtn}
-        onPress={() => navigation.navigate('EquipmentForm', { equipment: null, token })}
-      >
-        <Text style={styles.addBtnText}>+ Add Equipment</Text>
-      </TouchableOpacity>
+    <View style={common.screenContainer}>
+      <View style={common.header}>
+        <View>
+          <Text style={typography.screenTitle}>Equipment</Text>
+          <Text style={typography.screenSubtitle}>
+            {equipment.length} item{equipment.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={common.addBtn}
+          onPress={() => navigation.navigate('EquipmentFormScreen', { equipment: null, token })}
+        >
+          <Text style={common.addBtnText}>+ Add</Text>
+        </TouchableOpacity>
+      </View>
 
       {equipment.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.emptyText}>No equipment found. Add one!</Text>
+        <View style={common.center}>
+          <Text style={common.emptyIcon}>🔧</Text>
+          <Text style={typography.emptyText}>No equipment found. Add one!</Text>
         </View>
       ) : (
         <FlatList
           data={equipment}
           keyExtractor={item => item._id}
           renderItem={renderEquipment}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
           onRefresh={fetchEquipment}
           refreshing={loading}
         />
@@ -148,32 +151,6 @@ export default function EquipmentListScreen({ navigation, token }) {
 }
 
 const styles = StyleSheet.create({
-  container:            { flex: 1, backgroundColor: '#f5f5f5', padding: 16 },
-  center:               { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  addBtn:               { backgroundColor: '#1A5276', borderRadius: 8, padding: 14, alignItems: 'center', marginBottom: 16 },
-  addBtnText:           { color: '#fff', fontSize: 15, fontWeight: '600' },
-  card:                 { backgroundColor: '#fff', borderRadius: 10, padding: 14, marginBottom: 10 },
-  cardTop:              { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  photo:                { width: 56, height: 56, borderRadius: 8, marginRight: 12 },
-  photoPlaceholder:     { width: 56, height: 56, borderRadius: 8, backgroundColor: '#D6EAF8', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  photoPlaceholderText: { fontSize: 22, fontWeight: 'bold', color: '#1A5276' },
-  cardInfo:             { flex: 1 },
-  name:                 { fontSize: 15, fontWeight: '600', color: '#1B2631', marginBottom: 2 },
-  sub:                  { fontSize: 13, color: '#888', marginBottom: 6 },
-  cardActions:          { flexDirection: 'row', gap: 8, justifyContent: 'flex-end' },
-  badge:                { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  badgeGreen:           { backgroundColor: '#EAF3DE' },
-  badgeYellow:          { backgroundColor: '#FEF9E7' },
-  badgeRed:             { backgroundColor: '#FCEBEB' },
-  badgeGray:            { backgroundColor: '#F1EFE8' },
-  badgeText:            { fontSize: 11, fontWeight: '500' },
-  badgeTextGreen:       { color: '#3B6D11' },
-  badgeTextYellow:      { color: '#9A7D0A' },
-  badgeTextRed:         { color: '#A32D2D' },
-  badgeTextGray:        { color: '#5F5E5A' },
-  editBtn:              { backgroundColor: '#D6EAF8', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 7 },
-  editBtnText:          { color: '#1A5276', fontSize: 13, fontWeight: '500' },
-  deleteBtn:            { backgroundColor: '#FCEBEB', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 7 },
-  deleteBtnText:        { color: '#A32D2D', fontSize: 13, fontWeight: '500' },
-  emptyText:            { color: '#888', fontSize: 15 }
+  cardTop:  { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  cardInfo: { flex: 1 },
 })
