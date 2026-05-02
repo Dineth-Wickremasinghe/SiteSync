@@ -6,6 +6,7 @@ import {
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import api from '../../services/api'
+import { colors, typography, common } from '../../theme'
 
 const STATUS_OPTIONS = ['Active', 'On Hold', 'Completed']
 
@@ -109,66 +110,72 @@ export default function ProjectFormScreen({ route, navigation }) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <StatusBar barStyle="light-content" backgroundColor="#1B4332" />
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <ScrollView style={common.screenContainer} contentContainerStyle={[common.formContainer, styles.content]}>
 
-        <Text style={styles.sectionLabel}>Blueprint / Site Photo</Text>
-        <TouchableOpacity style={styles.imageBox} onPress={showImageOptions} activeOpacity={0.8}>
+        <Text style={[typography.label, styles.sectionLabel]}>Blueprint / Site Photo</Text>
+        <TouchableOpacity style={[common.uploadBtn, styles.imageBox]} onPress={showImageOptions} activeOpacity={0.8}>
           {imageUri ? (
-            <Image source={{ uri: imageUri }} style={styles.previewImage} />
+            <>
+              <Image source={{ uri: imageUri }} style={[common.imagePreview, styles.previewImage]} />
+              <View style={styles.changePhotoOverlay}>
+                <Text style={styles.changePhotoText}>Change photo</Text>
+              </View>
+            </>
           ) : (
             <View style={styles.imagePlaceholder}>
               <Text style={styles.imageIcon}>📎</Text>
-              <Text style={styles.imageHint}>Tap to upload blueprint</Text>
-              <Text style={styles.imageHintSub}>Camera or photo library</Text>
-            </View>
-          )}
-          {imageUri && (
-            <View style={styles.changePhotoOverlay}>
-              <Text style={styles.changePhotoText}>Change photo</Text>
+              <Text style={[common.uploadBtnText, styles.imageHint]}>Tap to upload blueprint</Text>
+              <Text style={[typography.cardSubtitle, styles.imageHintSub]}>Camera or photo library</Text>
             </View>
           )}
         </TouchableOpacity>
 
-        <Text style={styles.label}>Project Name <Text style={styles.required}>*</Text></Text>
+        <Text style={typography.label}>
+          Project Name <Text style={styles.required}>*</Text>
+        </Text>
         <TextInput
-          style={[styles.input, errors.projectName && styles.inputError]}
+          style={[common.input, errors.projectName && common.inputError]}
           placeholder="e.g. Colombo Tower Block A"
-          placeholderTextColor="#9DB8A2"
+          placeholderTextColor={colors.textLight}
           value={projectName}
           onChangeText={t => { setProjectName(t); setErrors(p => ({ ...p, projectName: '' })) }}
         />
-        {errors.projectName ? <Text style={styles.errorText}>{errors.projectName}</Text> : null}
+        {errors.projectName ? <Text style={typography.errorText}>{errors.projectName}</Text> : null}
 
-        <Text style={styles.label}>Location <Text style={styles.required}>*</Text></Text>
+        <Text style={typography.label}>
+          Location <Text style={styles.required}>*</Text>
+        </Text>
         <TextInput
-          style={[styles.input, errors.location && styles.inputError]}
+          style={[common.input, errors.location && common.inputError]}
           placeholder="e.g. Colombo 07, Sri Lanka"
-          placeholderTextColor="#9DB8A2"
+          placeholderTextColor={colors.textLight}
           value={location}
           onChangeText={t => { setLocation(t); setErrors(p => ({ ...p, location: '' })) }}
         />
-        {errors.location ? <Text style={styles.errorText}>{errors.location}</Text> : null}
+        {errors.location ? <Text style={typography.errorText}>{errors.location}</Text> : null}
 
-        <Text style={styles.label}>Client Name <Text style={styles.required}>*</Text></Text>
+        <Text style={typography.label}>
+          Client Name <Text style={styles.required}>*</Text>
+        </Text>
         <TextInput
-          style={[styles.input, errors.clientName && styles.inputError]}
+          style={[common.input, errors.clientName && common.inputError]}
           placeholder="e.g. ABC Developers (Pvt) Ltd"
-          placeholderTextColor="#9DB8A2"
+          placeholderTextColor={colors.textLight}
           value={clientName}
           onChangeText={t => { setClientName(t); setErrors(p => ({ ...p, clientName: '' })) }}
         />
-        {errors.clientName ? <Text style={styles.errorText}>{errors.clientName}</Text> : null}
+        {errors.clientName ? <Text style={typography.errorText}>{errors.clientName}</Text> : null}
 
-        <Text style={styles.label}>Status</Text>
-        <View style={styles.statusRow}>
+        <Text style={typography.label}>Status</Text>
+        <View style={[common.optionRow, styles.statusRow]}>
           {STATUS_OPTIONS.map(s => (
             <TouchableOpacity
               key={s}
-              style={[styles.statusChip, status === s && styles.statusChipActive]}
+              style={[common.option, styles.statusChip, status === s && common.optionActive]}
               onPress={() => setStatus(s)}
             >
-              <Text style={[styles.statusChipText, status === s && styles.statusChipTextActive]}>
+              <Text style={[common.optionText, status === s && common.optionTextActive]}>
                 {s}
               </Text>
             </TouchableOpacity>
@@ -176,19 +183,19 @@ export default function ProjectFormScreen({ route, navigation }) {
         </View>
 
         <TouchableOpacity
-          style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
+          style={[common.primaryBtn, loading && styles.submitBtnDisabled]}
           onPress={handleSubmit}
           disabled={loading}
           activeOpacity={0.85}
         >
           {loading
-            ? <ActivityIndicator color="#FFFFFF" />
-            : <Text style={styles.submitBtnText}>{isEditing ? 'Save Changes' : 'Create Project'}</Text>
+            ? <ActivityIndicator color={colors.background} />
+            : <Text style={common.primaryBtnText}>{isEditing ? 'Save Changes' : 'Create Project'}</Text>
           }
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
-          <Text style={styles.cancelBtnText}>Cancel</Text>
+          <Text style={[typography.link, styles.cancelBtnText]}>Cancel</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -196,31 +203,22 @@ export default function ProjectFormScreen({ route, navigation }) {
   )
 }
 
+// Screen-specific styles only
 const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: '#F4F6F4' },
-  content:      { padding: 20, paddingBottom: 48 },
-  sectionLabel: { fontSize: 13, fontWeight: '700', color: '#4A6B52', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
-  imageBox:     { borderRadius: 16, overflow: 'hidden', marginBottom: 24, borderWidth: 2, borderColor: '#C8DEC9', borderStyle: 'dashed', minHeight: 140 },
-  previewImage: { width: '100%', height: 180 },
-  imagePlaceholder:   { height: 140, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F0F7F1' },
+  content:            { paddingBottom: 48 },
+  sectionLabel:       { textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, marginTop: 0 },
+  imageBox:           { borderRadius: 16, overflow: 'hidden', marginBottom: 20, minHeight: 140, padding: 0, justifyContent: 'center', alignItems: 'center' },
+  previewImage:       { width: '100%', height: 180, borderRadius: 0, marginTop: 0 },
+  imagePlaceholder:   { height: 140, justifyContent: 'center', alignItems: 'center', width: '100%' },
   imageIcon:          { fontSize: 32, marginBottom: 6 },
-  imageHint:          { fontSize: 14, color: '#52B788', fontWeight: '600' },
-  imageHintSub:       { fontSize: 12, color: '#9DB8A2', marginTop: 2 },
-  changePhotoOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(27,67,50,0.55)', paddingVertical: 6, alignItems: 'center' },
+  imageHint:          { fontWeight: '600' },
+  imageHintSub:       { marginTop: 2 },
+  changePhotoOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.55)', paddingVertical: 6, alignItems: 'center' },
   changePhotoText:    { color: '#FFFFFF', fontWeight: '600', fontSize: 12 },
-  label:       { fontSize: 14, fontWeight: '600', color: '#2C4A32', marginBottom: 6, marginTop: 4 },
-  required:    { color: '#E53935' },
-  input:       { backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1.5, borderColor: '#D4E6D5', paddingHorizontal: 16, paddingVertical: 13, fontSize: 15, color: '#1B2B1E', marginBottom: 4 },
-  inputError:  { borderColor: '#E53935' },
-  errorText:   { color: '#E53935', fontSize: 12, marginBottom: 8, marginLeft: 4 },
-  statusRow:         { flexDirection: 'row', gap: 10, marginBottom: 28, marginTop: 4 },
-  statusChip:        { flex: 1, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, borderColor: '#C8DEC9', backgroundColor: '#FFFFFF', alignItems: 'center' },
-  statusChipActive:  { backgroundColor: '#1B4332', borderColor: '#1B4332' },
-  statusChipText:    { fontSize: 13, fontWeight: '600', color: '#4A6B52' },
-  statusChipTextActive: { color: '#FFFFFF' },
-  submitBtn:         { backgroundColor: '#1B4332', borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginBottom: 12, elevation: 3 },
-  submitBtnDisabled: { opacity: 0.6 },
-  submitBtnText:     { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  cancelBtn:         { alignItems: 'center', paddingVertical: 12 },
-  cancelBtnText:     { color: '#7A9B82', fontSize: 14, fontWeight: '500' },
+  required:           { color: colors.danger },
+  statusRow:          { marginBottom: 8, marginTop: 4 },
+  statusChip:         { flex: 1 },
+  submitBtnDisabled:  { opacity: 0.6 },
+  cancelBtn:          { alignItems: 'center', paddingVertical: 12 },
+  cancelBtnText:      { color: colors.textMuted, fontSize: 14 },
 })

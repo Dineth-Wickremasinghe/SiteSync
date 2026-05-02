@@ -1,6 +1,8 @@
 # SiteSync — Construction Site Management System
 
-A full stack mobile application for managing construction site operations including worker management, project tracking, equipment inventory, daily reports, incident reporting and site announcements.
+SiteSync is a full-stack mobile application developed for the SE2020 – Web and Mobile Technologies module at SLIIT. It digitises day-to-day construction site operations that are traditionally managed through paper-based systems, providing a centralised, role-based platform accessible from any mobile device.
+The application supports two user roles; Supervisors and Workers and covers seven core modules: worker management, project tracking, equipment inventory, daily site reports, incident reporting, and site notices. All file uploads including ID scans, blueprints, progress photos, and timesheets are stored on Cloudinary.
+Built using React Native (Expo) for the frontend and Node.js + Express.js for the backend, with MongoDB Atlas as the cloud database and hosted on Azure.
 
 
 ---
@@ -41,31 +43,31 @@ SiteSync/
 │   │   └── db.js
 │   ├── controllers/
 │   │   ├── authController.js
-│   │   ├── workerController.js
-│   │   ├── projectController.js
 │   │   ├── equipmentController.js
-│   │   ├── reportController.js
 │   │   ├── incidentController.js
-│   │   └── noticeController.js
+│   │   ├── noticeController.js
+│   │   ├── projectController.js
+│   │   ├── reportController.js
+│   │   └── workerController.js
 │   ├── middleware/
 │   │   ├── authMiddleware.js
 │   │   └── uploadMiddleware.js
 │   ├── models/
+│   │   ├── Equipment.js
+│   │   ├── Notice.js
+│   │   ├── Project.js
+│   │   ├── Report.js
 │   │   ├── User.js
 │   │   ├── Worker.js
-│   │   ├── Project.js
-│   │   ├── Equipment.js
-│   │   ├── Report.js
-│   │   ├── Incident.js
-│   │   └── Notice.js
+│   │   └── incident.js
 │   ├── routes/
 │   │   ├── authRoutes.js
-│   │   ├── workerRoutes.js
-│   │   ├── projectRoutes.js
 │   │   ├── equipmentRoutes.js
-│   │   ├── reportRoutes.js
 │   │   ├── incidentRoutes.js
-│   │   └── noticeRoutes.js
+│   │   ├── noticeRoutes.js
+│   │   ├── projectRoutes.js
+│   │   ├── reportRoutes.js
+│   │   └── workerRoutes.js
 │   ├── server.js
 │   └── .env
 └── frontend/
@@ -75,17 +77,30 @@ SiteSync/
     │   ├── auth/
     │   │   ├── LoginScreen.js
     │   │   └── RegisterScreen.js
-    │   ├── workers/
-    │   │   ├── WorkerListScreen.js
-    │   │   └── WorkerFormScreen.js
-    │   ├── projects/
     │   ├── equipment/
-    │   ├── reports/
+    │   │   ├── EquipmentFormScreen.js
+    │   │   └── EquipmentListScreen.js
     │   ├── incidents/
-    │   └── notices/
+    │   │   ├── IncidentFormScreen.js
+    │   │   └── IncidentListScreen.js
+    │   ├── notices/
+    │   │   ├── NoticeFormScreen.js
+    │   │   └── NoticeListScreen.js
+    │   ├── projects/
+    │   │   ├── ProjectDetailScreen.js
+    │   │   ├── ProjectFormScreen.js
+    │   │   └── ProjectListScreen.js
+    │   ├── reports/
+    │   │   ├── ReportFormScreen.js
+    │   │   └── ReportListScreen.js
+    │   ├── workers/
+    │   │   ├── WorkerFormScreen.js
+    │   │   └── WorkerListScreen.js
+    │   └── ProfileScreen.js
     ├── services/
     │   └── api.js
     └── App.js
+
 ```
 
 ---
@@ -233,7 +248,7 @@ Scan the QR code with **Expo Go** on your phone.
 
 | Role | Access |
 |---|---|
-| Admin | Full access to all modules |
+| Supervisor | Full access to all modules |
 | Worker | View only on most modules |
 
 ---
