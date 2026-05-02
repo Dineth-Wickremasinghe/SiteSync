@@ -106,6 +106,8 @@ SiteSync/
 ---
 
 ## Getting Started
+GitHub Repository: https://github.com/Dineth-Wickremasinghe/SiteSync
+Backend URL: sitesync-backend-ebftd0g8aybxhjbk.eastasia-01.azurewebsites.net
 
 ### Prerequisites
 
@@ -117,7 +119,7 @@ SiteSync/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/SiteSync.git
+git clone https://github.com/Dineth-Wickremasinghe/SiteSync.git
 cd SiteSync
 ```
 
