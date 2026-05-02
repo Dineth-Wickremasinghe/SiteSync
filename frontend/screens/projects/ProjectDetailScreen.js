@@ -4,11 +4,12 @@ import {
   Image, TouchableOpacity, Alert, ActivityIndicator, StatusBar
 } from 'react-native'
 import api from '../../services/api'
+import { colors, typography, common } from '../../theme'
 
 const STATUS_COLOR = {
-  Active:    { bg: '#E8F5E9', text: '#2E7D32', dot: '#4CAF50' },
-  'On Hold': { bg: '#FFF8E1', text: '#F57F17', dot: '#FFC107' },
-  Completed: { bg: '#E3F2FD', text: '#1565C0', dot: '#2196F3' },
+  Active:    { bg: colors.successLight, text: colors.success,  dot: colors.success  },
+  'On Hold': { bg: colors.warningLight, text: colors.warning,  dot: colors.warning  },
+  Completed: { bg: '#1E3A5F',           text: '#60A5FA',        dot: '#60A5FA'       },
 }
 
 export default function ProjectDetailScreen({ route, navigation }) {
@@ -59,8 +60,8 @@ export default function ProjectDetailScreen({ route, navigation }) {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#1B4332" />
+      <View style={[common.center, common.screenContainer]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     )
   }
@@ -72,8 +73,8 @@ export default function ProjectDetailScreen({ route, navigation }) {
   const updatedAt = new Date(project.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1B4332" />
+    <View style={common.screenContainer}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
       <ScrollView contentContainerStyle={styles.content}>
 
         {project.blueprintImage ? (
@@ -95,23 +96,23 @@ export default function ProjectDetailScreen({ route, navigation }) {
 
         <View style={styles.infoGrid}>
           <InfoCard icon="📍" label="Location"     value={project.location}   />
-          <InfoCard icon="👤" label="Client"       value={project.clientName} />
+          <InfoCard icon="👤" label="Client"        value={project.clientName} />
           {project.createdBy?.name && (
-            <InfoCard icon="🛠️" label="Created By" value={project.createdBy.name} />
+            <InfoCard icon="🛠️" label="Created By"  value={project.createdBy.name} />
           )}
-          <InfoCard icon="📅" label="Created"      value={createdAt} />
-          <InfoCard icon="🔄" label="Last Updated" value={updatedAt} />
+          <InfoCard icon="📅" label="Created"       value={createdAt} />
+          <InfoCard icon="🔄" label="Last Updated"  value={updatedAt} />
         </View>
 
         <View style={styles.actions}>
           <TouchableOpacity
-            style={styles.editBtn}
+            style={common.primaryBtn}
             onPress={() => navigation.navigate('ProjectForm', { project, token })}
           >
-            <Text style={styles.editBtnText}>✏️  Edit Project</Text>
+            <Text style={common.primaryBtnText}>✏️  Edit Project</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-            <Text style={styles.deleteBtnText}>🗑️  Delete</Text>
+          <TouchableOpacity style={[common.deleteBtn, styles.deleteBtnFull]} onPress={handleDelete}>
+            <Text style={common.deleteBtnText}>🗑️  Delete</Text>
           </TouchableOpacity>
         </View>
 
@@ -122,37 +123,32 @@ export default function ProjectDetailScreen({ route, navigation }) {
 
 function InfoCard({ icon, label, value }) {
   return (
-    <View style={styles.infoCard}>
+    <View style={[common.card, styles.infoCard]}>
       <Text style={styles.infoIcon}>{icon}</Text>
       <View style={styles.infoText}>
-        <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue}>{value}</Text>
+        <Text style={[typography.label, styles.infoLabel]}>{label}</Text>
+        <Text style={typography.cardTitle}>{value}</Text>
       </View>
     </View>
   )
 }
 
+// Screen-specific styles only
 const styles = StyleSheet.create({
-  container:       { flex: 1, backgroundColor: '#F4F6F4' },
-  centered:        { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content:         { paddingBottom: 40 },
-  heroImage:       { width: '100%', height: 240 },
-  heroPlaceholder: { width: '100%', height: 160, backgroundColor: '#E8F5E9', justifyContent: 'center', alignItems: 'center' },
-  heroIcon:        { fontSize: 56 },
-  statusContainer: { paddingHorizontal: 20, paddingTop: 20 },
-  statusBadge:     { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  statusDot:       { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
-  statusText:      { fontSize: 13, fontWeight: '700' },
-  projectTitle:    { fontSize: 26, fontWeight: '800', color: '#1B2B1E', paddingHorizontal: 20, marginTop: 10, marginBottom: 20, lineHeight: 32 },
-  infoGrid:        { paddingHorizontal: 20, gap: 10 },
-  infoCard:        { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 14, padding: 16, elevation: 2 },
-  infoIcon:        { fontSize: 22, marginRight: 14 },
-  infoText:        { flex: 1 },
-  infoLabel:       { fontSize: 11, color: '#9DB8A2', fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
-  infoValue:       { fontSize: 15, color: '#1B2B1E', fontWeight: '600' },
-  actions:         { paddingHorizontal: 20, marginTop: 28, gap: 12 },
-  editBtn:         { backgroundColor: '#1B4332', borderRadius: 14, paddingVertical: 16, alignItems: 'center', elevation: 3 },
-  editBtnText:     { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
-  deleteBtn:       { backgroundColor: '#FFF0F0', borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1.5, borderColor: '#FFCDD2' },
-  deleteBtnText:   { color: '#C62828', fontSize: 15, fontWeight: '600' },
+  content:        { paddingBottom: 40 },
+  heroImage:      { width: '100%', height: 240 },
+  heroPlaceholder:{ width: '100%', height: 160, backgroundColor: colors.inputBg, justifyContent: 'center', alignItems: 'center' },
+  heroIcon:       { fontSize: 56 },
+  statusContainer:{ paddingHorizontal: 20, paddingTop: 20 },
+  statusBadge:    { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  statusDot:      { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
+  statusText:     { fontSize: 13, fontWeight: '700' },
+  projectTitle:   { fontSize: 26, fontWeight: '800', color: colors.textDark, paddingHorizontal: 20, marginTop: 10, marginBottom: 20, lineHeight: 32 },
+  infoGrid:       { paddingHorizontal: 20, gap: 10 },
+  infoCard:       { flexDirection: 'row', alignItems: 'center', marginBottom: 0 },
+  infoIcon:       { fontSize: 22, marginRight: 14 },
+  infoText:       { flex: 1 },
+  infoLabel:      { fontSize: 11, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2, marginTop: 0 },
+  actions:        { paddingHorizontal: 20, marginTop: 8 },
+  deleteBtnFull:  { borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
 })

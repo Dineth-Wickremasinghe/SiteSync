@@ -5,11 +5,12 @@ import {
 } from 'react-native'
 import { useFocusEffect } from '@react-navigation/native'
 import api from '../../services/api'
+import { colors, typography, common } from '../../theme'
 
 const STATUS_COLOR = {
-  Active:    { bg: '#E8F5E9', text: '#2E7D32' },
-  'On Hold': { bg: '#FFF8E1', text: '#F57F17' },
-  Completed: { bg: '#E3F2FD', text: '#1565C0' },
+  Active:    { bg: colors.successLight, text: colors.success },
+  'On Hold': { bg: colors.warningLight, text: colors.warning },
+  Completed: { bg: '#1E3A5F',           text: '#60A5FA' },
 }
 
 export default function ProjectListScreen({ navigation, token }) {
@@ -56,7 +57,7 @@ export default function ProjectListScreen({ navigation, token }) {
     const statusStyle = STATUS_COLOR[item.status] || STATUS_COLOR['Active']
     return (
       <TouchableOpacity
-        style={styles.card}
+        style={[common.card, styles.card]}
         activeOpacity={0.85}
         onPress={() => navigation.navigate('ProjectDetail', { projectId: item._id, token })}
       >
@@ -69,28 +70,32 @@ export default function ProjectListScreen({ navigation, token }) {
         )}
         <View style={styles.cardBody}>
           <View style={styles.cardHeader}>
-            <Text style={styles.projectName} numberOfLines={1}>{item.projectName}</Text>
-            <View style={[styles.badge, { backgroundColor: statusStyle.bg }]}>
-              <Text style={[styles.badgeText, { color: statusStyle.text }]}>{item.status}</Text>
+            <Text style={[typography.cardTitle, styles.projectName]} numberOfLines={1}>
+              {item.projectName}
+            </Text>
+            <View style={[common.badge, { backgroundColor: statusStyle.bg }]}>
+              <Text style={[common.badgeText, { color: statusStyle.text }]}>{item.status}</Text>
             </View>
           </View>
-          <Text style={styles.meta}>📍 {item.location}</Text>
-          <Text style={styles.meta}>👤 {item.clientName}</Text>
+          <Text style={typography.cardSubtitle}>📍 {item.location}</Text>
+          <Text style={typography.cardSubtitle}>👤 {item.clientName}</Text>
           {item.createdBy?.name && (
-            <Text style={styles.metaLight}>Added by {item.createdBy.name}</Text>
+            <Text style={[typography.cardSubtitle, styles.metaLight]}>
+              Added by {item.createdBy.name}
+            </Text>
           )}
-          <View style={styles.cardActions}>
+          <View style={[common.cardActions, styles.cardActions]}>
             <TouchableOpacity
-              style={[styles.actionBtn, styles.editBtn]}
+              style={[common.editBtn, styles.actionBtn]}
               onPress={() => navigation.navigate('ProjectForm', { project: item, token })}
             >
-              <Text style={styles.editBtnText}>✏️ Edit</Text>
+              <Text style={common.editBtnText}>✏️ Edit</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.actionBtn, styles.deleteBtn]}
+              style={[common.deleteBtn, styles.actionBtn]}
               onPress={() => handleDelete(item._id, item.projectName)}
             >
-              <Text style={styles.deleteBtnText}>🗑️ Delete</Text>
+              <Text style={common.deleteBtnText}>🗑️ Delete</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -100,26 +105,28 @@ export default function ProjectListScreen({ navigation, token }) {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#1B4332" />
-        <Text style={styles.loadingText}>Loading projects...</Text>
+      <View style={[common.center, common.screenContainer]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[typography.cardSubtitle, { marginTop: 12 }]}>Loading projects...</Text>
       </View>
     )
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1B4332" />
-      <View style={styles.header}>
+    <View style={common.screenContainer}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <View style={common.header}>
         <View>
-          <Text style={styles.headerTitle}>Projects</Text>
-          <Text style={styles.headerSub}>{projects.length} site{projects.length !== 1 ? 's' : ''} active</Text>
+          <Text style={typography.screenTitle}>Projects</Text>
+          <Text style={typography.screenSubtitle}>
+            {projects.length} site{projects.length !== 1 ? 's' : ''} active
+          </Text>
         </View>
         <TouchableOpacity
-          style={styles.addBtn}
+          style={common.addBtn}
           onPress={() => navigation.navigate('ProjectForm', { project: null, token })}
         >
-          <Text style={styles.addBtnText}>+ New</Text>
+          <Text style={common.addBtnText}>+ New</Text>
         </TouchableOpacity>
       </View>
       <FlatList
@@ -131,14 +138,14 @@ export default function ProjectListScreen({ navigation, token }) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={() => { setRefreshing(true); fetchProjects() }}
-            tintColor="#1B4332"
+            tintColor={colors.primary}
           />
         }
         ListEmptyComponent={
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyIcon}>📋</Text>
-            <Text style={styles.emptyTitle}>No projects yet</Text>
-            <Text style={styles.emptyText}>Tap "+ New" to add your first project</Text>
+          <View style={[common.center, styles.emptyBox]}>
+            <Text style={common.emptyIcon}>📋</Text>
+            <Text style={[typography.sectionTitle, styles.emptyTitle]}>No projects yet</Text>
+            <Text style={typography.emptyText}>Tap "+ New" to add your first project</Text>
           </View>
         }
       />
@@ -146,45 +153,19 @@ export default function ProjectListScreen({ navigation, token }) {
   )
 }
 
+// Screen-specific styles only
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: '#F4F6F4' },
-  centered:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F4F6F4' },
-  loadingText: { marginTop: 12, color: '#1B4332', fontSize: 14 },
-  header: {
-    backgroundColor: '#1B4332',
-    paddingTop: 54, paddingBottom: 20, paddingHorizontal: 20,
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end',
-    elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2, shadowRadius: 4,
-  },
-  headerTitle:  { fontSize: 28, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 },
-  headerSub:    { fontSize: 13, color: '#A8D5B5', marginTop: 2 },
-  addBtn:       { backgroundColor: '#52B788', paddingHorizontal: 18, paddingVertical: 9, borderRadius: 20 },
-  addBtnText:   { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
-  list:         { padding: 16, paddingBottom: 32 },
-  card: {
-    backgroundColor: '#FFFFFF', borderRadius: 16, marginBottom: 16,
-    overflow: 'hidden', elevation: 3, shadowColor: '#1B4332',
-    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8,
-  },
-  cardImage:            { width: '100%', height: 140, backgroundColor: '#E8F0E9' },
-  cardImagePlaceholder: { width: '100%', height: 100, backgroundColor: '#E8F5E9', justifyContent: 'center', alignItems: 'center' },
+  list:                 { padding: 16, paddingBottom: 32 },
+  card:                 { padding: 0, overflow: 'hidden' },
+  cardImage:            { width: '100%', height: 140 },
+  cardImagePlaceholder: { width: '100%', height: 100, backgroundColor: colors.inputBg, justifyContent: 'center', alignItems: 'center' },
   placeholderIcon:      { fontSize: 36 },
-  cardBody:             { padding: 16 },
-  cardHeader:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  projectName:          { fontSize: 17, fontWeight: '700', color: '#1B2B1E', flex: 1, marginRight: 8 },
-  badge:                { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 12 },
-  badgeText:            { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
-  meta:                 { fontSize: 13, color: '#4A6B52', marginBottom: 3 },
-  metaLight:            { fontSize: 12, color: '#9DB8A2', marginTop: 2 },
-  cardActions:          { flexDirection: 'row', marginTop: 14, gap: 8 },
-  actionBtn:            { flex: 1, paddingVertical: 9, borderRadius: 10, alignItems: 'center' },
-  editBtn:              { backgroundColor: '#E8F5E9', borderWidth: 1, borderColor: '#52B788' },
-  deleteBtn:            { backgroundColor: '#FFF0F0', borderWidth: 1, borderColor: '#E57373' },
-  editBtnText:          { color: '#2E7D32', fontWeight: '600', fontSize: 13 },
-  deleteBtnText:        { color: '#C62828', fontWeight: '600', fontSize: 13 },
-  emptyBox:             { alignItems: 'center', paddingTop: 80 },
-  emptyIcon:            { fontSize: 48, marginBottom: 12 },
-  emptyTitle:           { fontSize: 18, fontWeight: '700', color: '#1B4332', marginBottom: 6 },
-  emptyText:            { fontSize: 14, color: '#7A9B82', textAlign: 'center' },
+  cardBody:             { padding: 14 },
+  cardHeader:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  projectName:          { flex: 1, marginRight: 8 },
+  metaLight:            { color: colors.textLight, fontSize: 12, marginTop: 2 },
+  cardActions:          { marginTop: 12, justifyContent: 'flex-start' },
+  actionBtn:            { flex: 1 },
+  emptyBox:             { paddingTop: 80 },
+  emptyTitle:           { fontSize: 18, marginBottom: 6 },
 })
