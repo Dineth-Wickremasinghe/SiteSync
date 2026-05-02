@@ -20,6 +20,7 @@ import IncidentListScreen from '../screens/incidents/IncidentListScreen'
 import IncidentFormScreen from '../screens/incidents/IncidentFormScreen'
 import ProfileScreen from '../screens/ProfileScreen'
 import { colors } from '../theme'
+import { Text } from 'react-native'
 
 const Stack = createNativeStackNavigator()
 const Tab   = createBottomTabNavigator()
@@ -34,10 +35,11 @@ const stackScreenOptions = {
 
 const tabBarOptions = {
   headerShown:             false,
-  tabBarStyle:             { backgroundColor: colors.card, borderTopColor: colors.primary, borderTopWidth: 2 },
+  tabBarStyle:             {  marginBottom: 3,backgroundColor: colors.card, borderTopColor: colors.primary, borderTopWidth: 2 },
   tabBarActiveTintColor:   colors.primary,
   tabBarInactiveTintColor: colors.textMuted,
   tabBarLabelStyle:        { fontSize: 11, fontWeight: '600' },
+  tabBarShowLabel: false,
 }
 
 function WorkersStack({ token }) {
@@ -128,6 +130,9 @@ function NoticesStack({ token }) {
 }
 
 function ProfileStack({ token, setToken }) {
+  
+
+
   return (
     <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen name="ProfileScreen" options={{ headerShown: false }}>
@@ -140,8 +145,22 @@ function ProfileStack({ token, setToken }) {
 // ── Worker tab navigator — Reports, Incidents, Notices, Profile only ──────────
 function WorkerTabs({ token, role, setToken }) {
   return (
-    <Tab.Navigator screenOptions={tabBarOptions}>
-      <Tab.Screen name="Reports"   children={() => <ReportsStack   token={token} role={role} />} />
+    <Tab.Navigator 
+    screenOptions={({ route }) => ({
+        ...tabBarOptions,
+        tabBarIcon: ({ color }) => {
+          let emoji = '❓'
+
+          if (route.name === 'Reports') emoji = '📊'
+          else if (route.name === 'Incidents') emoji = '⚠️'
+          else if (route.name === 'Notices') emoji = '📢'
+          else if (route.name === 'Profile') emoji = '👤'
+
+          return <Text style={{ fontSize: 18 }}>{emoji}</Text>
+        }
+      })}
+    >
+      <Tab.Screen name="Reports"   children={() => <ReportsStack   token={token} />} />
       <Tab.Screen name="Incidents" children={() => <IncidentsStack token={token} />} />
       <Tab.Screen name="Notices"   children={() => <NoticesStack   token={token} />} />
       <Tab.Screen name="Profile"   children={() => <ProfileStack   token={token} setToken={setToken} />} />
@@ -152,7 +171,24 @@ function WorkerTabs({ token, role, setToken }) {
 // ── Admin/Supervisor tab navigator — all screens ──────────────────────────────
 function AdminTabs({ token, role, setToken }) {
   return (
-    <Tab.Navigator screenOptions={tabBarOptions}>
+    <Tab.Navigator 
+     screenOptions={({ route }) => ({
+        ...tabBarOptions,
+        tabBarIcon: ({ color }) => {
+          let emoji = '❓'
+
+          if (route.name === 'Workers') emoji = '👷'
+          else if (route.name === 'Projects') emoji = '📁'
+          else if (route.name === 'Equipment') emoji = '🛠️'
+          else if (route.name === 'Reports') emoji = '📊'
+          else if (route.name === 'Incidents') emoji = '⚠️'
+          else if (route.name === 'Notices') emoji = '📢'
+          else if (route.name === 'Profile') emoji = '👤'
+
+          return <Text style={{ fontSize: 18 }}>{emoji}</Text>
+        }
+      })}
+    >
       <Tab.Screen name="Workers"   children={() => <WorkersStack   token={token} />} />
       <Tab.Screen name="Projects"  children={() => <ProjectsStack  token={token} />} />
       <Tab.Screen name="Equipment" children={() => <EquipmentStack token={token} />} />
