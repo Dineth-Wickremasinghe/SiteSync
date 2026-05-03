@@ -1,20 +1,37 @@
 const Report = require('../models/Report')
 
+// helper — returns true if the given YYYY-MM-DD string is in the future
+const isFutureDate = (dateStr) => {
+  const today = new Date()
+  today.setHours(23, 59, 59, 999)      // allow any time within today
+  const inputDate = new Date(dateStr)
+  return inputDate > today
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // @POST  /api/reports
-// Create a new daily report (with optional photo upload via Cloudinary)
+// Create a new daily report (supervisor only — enforced in routes)
 // ─────────────────────────────────────────────────────────────────────────────
 const createReport = async (req, res) => {
   try {
     const { projectName, reportDate, workDone, workerCount } = req.body
+
+    // Date validation — reject invalid format
+    if (!reportDate || isNaN(new Date(reportDate).getTime())) {
+      return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD' })
+    }
+    // Date validation — reject future dates
+    if (isFutureDate(reportDate)) {
+      return res.status(400).json({ message: 'Report date cannot be a future date' })
+    }
 
     const report = await Report.create({
       projectName,
       reportDate,
       workDone,
       workerCount,
-      reportPhoto: req.file ? req.file.path : '',   // Cloudinary URL from multer
-      createdBy: req.user.id                         // set by authMiddleware
+      reportPhoto: req.file ? req.file.path : '',
+      createdBy: req.user.id
     })
 
     res.status(201).json(report)
@@ -26,7 +43,7 @@ const createReport = async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // @GET  /api/reports
-// Get all daily reports (newest first)
+// Get all daily reports (newest first) — all authenticated users
 // ─────────────────────────────────────────────────────────────────────────────
 const getReports = async (req, res) => {
   try {
@@ -43,7 +60,7 @@ const getReports = async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // @GET  /api/reports/:id
-// Get a single daily report by its MongoDB _id
+// Get a single daily report — all authenticated users
 // ─────────────────────────────────────────────────────────────────────────────
 const getReportById = async (req, res) => {
   try {
@@ -60,7 +77,7 @@ const getReportById = async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // @PUT  /api/reports/:id
-// Update a daily report (all fields optional; photo updated if new file sent)
+// Update a daily report (supervisor only — enforced in routes)
 // ─────────────────────────────────────────────────────────────────────────────
 const updateReport = async (req, res) => {
   try {
@@ -68,13 +85,21 @@ const updateReport = async (req, res) => {
 
     if (!report) return res.status(404).json({ message: 'Report not found' })
 
-    // Only update fields that were sent in the request body
-    report.projectName  = req.body.projectName  || report.projectName
-    report.reportDate   = req.body.reportDate   || report.reportDate
-    report.workDone     = req.body.workDone     || report.workDone
-    report.workerCount  = req.body.workerCount  !== undefined ? req.body.workerCount : report.workerCount
+    // Date validation on update — only check if a new date was sent
+    if (req.body.reportDate) {
+      if (isNaN(new Date(req.body.reportDate).getTime())) {
+        return res.status(400).json({ message: 'Invalid date format. Use YYYY-MM-DD' })
+      }
+      if (isFutureDate(req.body.reportDate)) {
+        return res.status(400).json({ message: 'Report date cannot be a future date' })
+      }
+    }
 
-    // Replace photo only when a new file is uploaded
+    report.projectName = req.body.projectName || report.projectName
+    report.reportDate  = req.body.reportDate  || report.reportDate
+    report.workDone    = req.body.workDone    || report.workDone
+    report.workerCount = req.body.workerCount !== undefined ? req.body.workerCount : report.workerCount
+
     if (req.file) report.reportPhoto = req.file.path
 
     const updated = await report.save()
@@ -87,7 +112,7 @@ const updateReport = async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // @DELETE  /api/reports/:id
-// Delete a daily report by its MongoDB _id
+// Delete a daily report (supervisor only — enforced in routes)
 // ─────────────────────────────────────────────────────────────────────────────
 const deleteReport = async (req, res) => {
   try {

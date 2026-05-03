@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import { Ionicons } from '@expo/vector-icons'
 import LoginScreen from '../screens/auth/LoginScreen'
 import RegisterScreen from '../screens/auth/RegisterScreen'
 import WorkerListScreen from '../screens/workers/WorkerListScreen'
@@ -15,6 +16,7 @@ import NoticeListScreen from '../screens/notices/NoticeListScreen'
 import NoticeFormScreen from '../screens/notices/NoticeFormScreen'
 import ReportListScreen from '../screens/reports/ReportListScreen'
 import ReportFormScreen from '../screens/reports/ReportFormScreen'
+import ReportDetailScreen from '../screens/reports/ReportDetailScreen'
 import IncidentListScreen from '../screens/incidents/IncidentListScreen'
 import IncidentFormScreen from '../screens/incidents/IncidentFormScreen'
 import ProfileScreen from '../screens/ProfileScreen'
@@ -33,10 +35,40 @@ const stackScreenOptions = {
 
 const tabBarOptions = {
   headerShown:             false,
-  tabBarStyle:             { backgroundColor: colors.card, borderTopColor: colors.primary, borderTopWidth: 2 },
+  tabBarStyle: {
+    backgroundColor:  colors.card,
+    borderTopColor:   colors.primary,
+    borderTopWidth:   2,
+    paddingBottom:    20,
+    paddingTop:       4,
+    height:           78,
+  },
   tabBarActiveTintColor:   colors.primary,
   tabBarInactiveTintColor: colors.textMuted,
-  tabBarLabelStyle:        { fontSize: 11, fontWeight: '600' },
+  tabBarLabelStyle:        { fontSize: 10, fontWeight: '600', marginTop: 2 },
+  tabBarShowLabel:         true,
+}
+
+// Icon map — active icons are filled, inactive are outline
+const ICONS = {
+  Workers:   { active: 'people',         inactive: 'people-outline' },
+  Projects:  { active: 'folder',         inactive: 'folder-outline' },
+  Equipment: { active: 'construct',      inactive: 'construct-outline' },
+  Reports:   { active: 'bar-chart',      inactive: 'bar-chart-outline' },
+  Incidents: { active: 'warning',        inactive: 'warning-outline' },
+  Notices:   { active: 'megaphone',      inactive: 'megaphone-outline' },
+  Profile:   { active: 'person-circle',  inactive: 'person-circle-outline' },
+}
+
+const tabIcon = (routeName) => ({ color, focused }) => {
+  const icon = ICONS[routeName]
+  return (
+    <Ionicons
+      name={focused ? icon.active : icon.inactive}
+      size={22}
+      color={color}
+    />
+  )
 }
 
 function WorkersStack({ token }) {
@@ -84,14 +116,17 @@ function EquipmentStack({ token }) {
   )
 }
 
-function ReportsStack({ token }) {
+function ReportsStack({ token, role }) {
   return (
     <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen name="ReportListScreen" options={{ headerShown: false }}>
-        {props => <ReportListScreen {...props} token={token} />}
+        {props => <ReportListScreen {...props} token={token} role={role} />}
+      </Stack.Screen>
+      <Stack.Screen name="ReportDetailScreen" options={{ title: 'Report Details' }}>
+        {props => <ReportDetailScreen {...props} token={token} role={role} />}
       </Stack.Screen>
       <Stack.Screen name="ReportFormScreen" options={{ title: 'Report Details' }}>
-        {props => <ReportFormScreen {...props} token={token} />}
+        {props => <ReportFormScreen {...props} token={token} role={role} />}
       </Stack.Screen>
     </Stack.Navigator>
   )
@@ -133,11 +168,13 @@ function ProfileStack({ token, setToken }) {
   )
 }
 
-// ── Worker tab navigator — Reports, Incidents, Notices, Profile only ──────────
-function WorkerTabs({ token, setToken }) {
+function WorkerTabs({ token, role, setToken }) {
   return (
-    <Tab.Navigator screenOptions={tabBarOptions}>
-      <Tab.Screen name="Reports"   children={() => <ReportsStack   token={token} />} />
+    <Tab.Navigator screenOptions={({ route }) => ({
+      ...tabBarOptions,
+      tabBarIcon: tabIcon(route.name),
+    })}>
+      <Tab.Screen name="Reports"   children={() => <ReportsStack   token={token} role={role} />} />
       <Tab.Screen name="Incidents" children={() => <IncidentsStack token={token} />} />
       <Tab.Screen name="Notices"   children={() => <NoticesStack   token={token} />} />
       <Tab.Screen name="Profile"   children={() => <ProfileStack   token={token} setToken={setToken} />} />
@@ -145,14 +182,16 @@ function WorkerTabs({ token, setToken }) {
   )
 }
 
-// ── Admin/Supervisor tab navigator — all screens ──────────────────────────────
-function AdminTabs({ token, setToken }) {
+function AdminTabs({ token, role, setToken }) {
   return (
-    <Tab.Navigator screenOptions={tabBarOptions}>
+    <Tab.Navigator screenOptions={({ route }) => ({
+      ...tabBarOptions,
+      tabBarIcon: tabIcon(route.name),
+    })}>
       <Tab.Screen name="Workers"   children={() => <WorkersStack   token={token} />} />
       <Tab.Screen name="Projects"  children={() => <ProjectsStack  token={token} />} />
       <Tab.Screen name="Equipment" children={() => <EquipmentStack token={token} />} />
-      <Tab.Screen name="Reports"   children={() => <ReportsStack   token={token} />} />
+      <Tab.Screen name="Reports"   children={() => <ReportsStack   token={token} role={role} />} />
       <Tab.Screen name="Incidents" children={() => <IncidentsStack token={token} />} />
       <Tab.Screen name="Notices"   children={() => <NoticesStack   token={token} />} />
       <Tab.Screen name="Profile"   children={() => <ProfileStack   token={token} setToken={setToken} />} />
@@ -176,11 +215,11 @@ export default function AppNavigator() {
           </>
         ) : role === 'worker' ? (
           <Stack.Screen name="App">
-            {() => <WorkerTabs token={token} setToken={setToken} />}
+            {() => <WorkerTabs token={token} role={role} setToken={setToken} />}
           </Stack.Screen>
         ) : (
           <Stack.Screen name="App">
-            {() => <AdminTabs token={token} setToken={setToken} />}
+            {() => <AdminTabs token={token} role={role} setToken={setToken} />}
           </Stack.Screen>
         )}
       </Stack.Navigator>

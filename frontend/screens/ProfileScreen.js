@@ -15,15 +15,29 @@ export default function ProfileScreen({ token, setToken }) {
   const [profileImage,    setProfileImage]    = useState(null)
   const [loading,         setLoading]         = useState(false)
   const [fetching,        setFetching]        = useState(true)
+  const [workerRecord,    setWorkerRecord]    = useState(null)
 
   useEffect(() => { fetchProfile() }, [])
 
   const fetchProfile = async () => {
     try {
-      const res = await api.get('/auth/profile')
+      // Fetch user profile
+      const res = await api.get('/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       setName(res.data.name)
       setEmail(res.data.email)
       setProfileImage(res.data.profileImage || null)
+
+      // Try to fetch linked worker record — silently ignore if not found
+      try {
+        const workerRes = await api.get('/workers/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        setWorkerRecord(workerRes.data)
+      } catch {
+        setWorkerRecord(null)
+      }
     } catch (err) {
       Alert.alert('Error', 'Failed to load profile')
     } finally {
@@ -67,7 +81,10 @@ export default function ProfileScreen({ token, setToken }) {
       }
 
       await api.put('/auth/profile', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {
+          Authorization:  `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
       })
 
       setCurrentPassword('')
@@ -96,6 +113,11 @@ export default function ProfileScreen({ token, setToken }) {
       }
     ])
   }
+
+  const getStatusStyle = (status) => ({
+    bg:   status === 'Active' ? colors.successLight : colors.borderLight,
+    text: status === 'Active' ? colors.success      : colors.textMuted,
+  })
 
   if (fetching) {
     return (
@@ -157,7 +179,7 @@ export default function ProfileScreen({ token, setToken }) {
       </View>
 
       <TouchableOpacity
-        style={[common.primaryBtn, loading && { opacity: 0.6 }]}
+        style={[common.primaryBtn, { marginHorizontal: 20 }, loading && { opacity: 0.6 }]}
         onPress={handleUpdate}
         disabled={loading}
       >
@@ -195,6 +217,49 @@ export default function ProfileScreen({ token, setToken }) {
         </View>
       </View>
 
+      {/* Worker Record — only shows if account is linked to a worker */}
+      {workerRecord && (
+        <>
+          <Text style={styles.sectionLabel}>MY WORKER RECORD</Text>
+          <View style={styles.card}>
+
+            {/* ID Photo */}
+            {workerRecord.idPhotoUrl && (
+              <Image
+                source={{ uri: workerRecord.idPhotoUrl }}
+                style={styles.workerPhoto}
+                resizeMode="cover"
+              />
+            )}
+
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Trade</Text>
+              <Text style={styles.fieldValue}>{workerRecord.trade}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Phone</Text>
+              <Text style={styles.fieldValue}>{workerRecord.phone}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>Status</Text>
+              <View style={[
+                styles.statusBadge,
+                { backgroundColor: getStatusStyle(workerRecord.status).bg }
+              ]}>
+                <Text style={[
+                  styles.statusBadgeText,
+                  { color: getStatusStyle(workerRecord.status).text }
+                ]}>
+                  {workerRecord.status}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </>
+      )}
+
       {/* Logout */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
         <Text style={styles.logoutText}>Log Out</Text>
@@ -205,11 +270,8 @@ export default function ProfileScreen({ token, setToken }) {
 }
 
 const styles = StyleSheet.create({
-  content: {
-    paddingBottom: 48,
-  },
+  content: { paddingBottom: 48 },
 
-  // Header
   header: {
     backgroundColor: colors.background,
     paddingTop: 54,
@@ -220,103 +282,30 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
 
-  // Avatar
-  avatarWrapper: {
-    alignItems: 'center',
-    marginBottom: 28,
-  },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginBottom: 8,
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  avatarPlaceholder: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: colors.inputBg,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  avatarInitial: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: colors.primary,
-  },
-  avatarHintRow: {
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  avatarHint: {
-    fontSize: 12,
-    color: colors.primaryDark,
-    fontWeight: '500',
-  },
+  avatarWrapper:     { alignItems: 'center', marginBottom: 28 },
+  avatar:            { width: 90, height: 90, borderRadius: 45, marginBottom: 8, borderWidth: 2, borderColor: colors.primary },
+  avatarPlaceholder: { width: 90, height: 90, borderRadius: 45, backgroundColor: colors.inputBg, justifyContent: 'center', alignItems: 'center', marginBottom: 8, borderWidth: 2, borderColor: colors.primary },
+  avatarInitial:     { fontSize: 36, fontWeight: '700', color: colors.primary },
+  avatarHintRow:     { backgroundColor: colors.primaryLight, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
+  avatarHint:        { fontSize: 12, color: colors.primaryDark, fontWeight: '500' },
 
-  // Section label
   sectionLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.primary,
-    letterSpacing: 1,
-    marginBottom: 8,
-    marginLeft: 20,
+    fontSize: 11, fontWeight: '600', color: colors.primary,
+    letterSpacing: 1, marginBottom: 8, marginLeft: 20,
   },
 
-  // Card
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    marginBottom: 16,
-    marginHorizontal: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  field: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  fieldLabel: {
-    fontSize: 11,
-    color: colors.textMuted,
-    marginBottom: 4,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  fieldInput: {
-    fontSize: 15,
-    color: colors.textDark,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginLeft: 16,
-  },
+  card:       { backgroundColor: colors.card, borderRadius: 12, marginBottom: 16, marginHorizontal: 20, overflow: 'hidden', borderWidth: 1, borderColor: colors.border },
+  field:      { paddingHorizontal: 16, paddingVertical: 12 },
+  fieldLabel: { fontSize: 11, color: colors.textMuted, marginBottom: 4, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  fieldInput: { fontSize: 15, color: colors.textDark },
+  fieldValue: { fontSize: 15, color: colors.textDark, fontWeight: '500' },
+  divider:    { height: 1, backgroundColor: colors.border, marginLeft: 16 },
 
-  // Logout
-  logoutBtn: {
-    borderWidth: 1.5,
-    borderColor: colors.danger,
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 8,
-    marginHorizontal: 20,
-    marginBottom: 20,
-  },
-  logoutText: {
-    color: colors.danger,
-    fontSize: 15,
-    fontWeight: '600',
-  },
+  workerPhoto: { width: '100%', height: 160 },
+
+  statusBadge:     { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginTop: 4 },
+  statusBadgeText: { fontSize: 13, fontWeight: '600' },
+
+  logoutBtn:  { borderWidth: 1.5, borderColor: colors.danger, borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 8, marginHorizontal: 20, marginBottom: 20 },
+  logoutText: { color: colors.danger, fontSize: 15, fontWeight: '600' },
 })
