@@ -7,10 +7,12 @@ import {
 import { useFocusEffect } from '@react-navigation/native'
 import api from '../../services/api'
 import { colors, common, typography } from '../../theme'
+import { Ionicons } from '@expo/vector-icons'
 
 const TRADES   = ['All', 'Mason', 'Electrician', 'Plumber', 'General']
 const STATUSES = ['All', 'Active', 'Inactive']
 const SORTS    = ['Name', 'Trade', 'Status']
+
 
 export default function WorkerListScreen({ navigation, token }) {
   const [workers,        setWorkers]        = useState([])
@@ -19,6 +21,7 @@ export default function WorkerListScreen({ navigation, token }) {
   const [selectedTrade,  setSelectedTrade]  = useState('All')
   const [selectedStatus, setSelectedStatus] = useState('All')
   const [sortBy,         setSortBy]         = useState('Name')
+  const [showFilters, setShowFilters] = useState(false)
 
   const fetchWorkers = async () => {
     try {
@@ -170,68 +173,83 @@ export default function WorkerListScreen({ navigation, token }) {
       </View>
 
       {/* ── Search ── */}
-      <View style={styles.searchBox}>
-        <Text style={styles.searchIcon}>🔍</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by name or phone..."
-          value={search}
-          onChangeText={setSearch}
-          placeholderTextColor={colors.textLight}
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
-            <Text style={styles.clearSearch}>✕</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      {/* ── Search + Filter toggle ── */}
+<View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+  <View style={[styles.searchBox, { flex: 1, marginBottom: 0 }]}>
+    <Text style={styles.searchIcon}>🔍</Text>
+    <TextInput
+      style={styles.searchInput}
+      placeholder="Search by name or phone..."
+      value={search}
+      onChangeText={setSearch}
+      placeholderTextColor={colors.textLight}
+    />
+    {search.length > 0 && (
+      <TouchableOpacity onPress={() => setSearch('')}>
+        <Text style={styles.clearSearch}>✕</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+  <TouchableOpacity
+    style={[styles.filterToggleBtn, showFilters && styles.filterToggleBtnActive]}
+    onPress={() => setShowFilters(f => !f)}
+  >
+    <Ionicons
+      name="options-outline"
+      size={20}
+      color={showFilters ? colors.background : colors.primary}
+    />
+  </TouchableOpacity>
+</View>
 
-      {/* ── Trade filter ── */}
-      <Text style={styles.filterLabel}>Trade</Text>
-      <View style={common.optionRow}>
-        {TRADES.map(t => (
-          <TouchableOpacity
-            key={t}
-            style={[styles.chip, selectedTrade === t && styles.chipActive]}
-            onPress={() => setSelectedTrade(t)}
-          >
-            <Text style={[styles.chipText, selectedTrade === t && styles.chipTextActive]}>{t}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+{/* ── Filters — only visible when toggled ── */}
+{showFilters && (
+  <>
+    <Text style={styles.filterLabel}>Trade</Text>
+    <View style={[common.optionRow, { marginBottom: 14 }]}>
+      {TRADES.map(t => (
+        <TouchableOpacity
+          key={t}
+          style={[styles.chip, selectedTrade === t && styles.chipActive]}
+          onPress={() => setSelectedTrade(t)}
+        >
+          <Text style={[styles.chipText, selectedTrade === t && styles.chipTextActive]}>{t}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
 
-      {/* ── Status filter ── */}
-      <Text style={[styles.filterLabel, { marginTop: 14 }]}>Status</Text>
-      <View style={common.optionRow}>
-        {STATUSES.map(s => (
-          <TouchableOpacity
-            key={s}
-            style={[styles.chip, selectedStatus === s && styles.chipActive]}
-            onPress={() => setSelectedStatus(s)}
-          >
-            <Text style={[styles.chipText, selectedStatus === s && styles.chipTextActive]}>{s}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+    <Text style={styles.filterLabel}>Status</Text>
+    <View style={[common.optionRow, { marginBottom: 14 }]}>
+      {STATUSES.map(s => (
+        <TouchableOpacity
+          key={s}
+          style={[styles.chip, selectedStatus === s && styles.chipActive]}
+          onPress={() => setSelectedStatus(s)}
+        >
+          <Text style={[styles.chipText, selectedStatus === s && styles.chipTextActive]}>{s}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
 
-      {/* ── Sort ── */}
-      <Text style={[styles.filterLabel, { marginTop: 14 }]}>Sort by</Text>
-      <View style={common.optionRow}>
-        {SORTS.map(s => (
-          <TouchableOpacity
-            key={s}
-            style={[styles.chip, sortBy === s && styles.chipActive]}
-            onPress={() => setSortBy(s)}
-          >
-            <Text style={[styles.chipText, sortBy === s && styles.chipTextActive]}>{s}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+    <Text style={styles.filterLabel}>Sort by</Text>
+    <View style={[common.optionRow, { marginBottom: 14 }]}>
+      {SORTS.map(s => (
+        <TouchableOpacity
+          key={s}
+          style={[styles.chip, sortBy === s && styles.chipActive]}
+          onPress={() => setSortBy(s)}
+        >
+          <Text style={[styles.chipText, sortBy === s && styles.chipTextActive]}>{s}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  </>
+)}
 
-      {/* ── Results count ── */}
-      <Text style={styles.resultsText}>
-        {filtered.length} of {workers.length} worker{workers.length !== 1 ? 's' : ''}
-      </Text>
+{/* ── Results count ── */}
+<Text style={styles.resultsText}>
+  {filtered.length} of {workers.length} worker{workers.length !== 1 ? 's' : ''}
+</Text>
     </>
   )
 
@@ -314,4 +332,17 @@ const styles = StyleSheet.create({
   chipActive:     { backgroundColor: colors.primary, borderColor: colors.primary },
   chipText:       { fontSize: 13, color: '#555' },
   chipTextActive: { color: colors.card },
+  filterToggleBtn: {
+  width: 46,
+  height: 46,
+  borderRadius: 10,
+  backgroundColor: colors.card,
+  borderWidth: 1,
+  borderColor: colors.primary,
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+filterToggleBtnActive: {
+  backgroundColor: colors.primary,
+},
 })
