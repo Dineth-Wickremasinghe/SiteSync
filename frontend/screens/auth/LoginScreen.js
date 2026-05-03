@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, ActivityIndicator,
-  KeyboardAvoidingView, Platform
+  KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native'
 import api from '../../services/api'
 
@@ -37,19 +37,21 @@ export default function LoginScreen({ navigation, setToken, setRole }) {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.container}>
-
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
         {/* Top stripe */}
         <View style={[styles.stripeRow, { marginTop: 44 }]}>
-        {Array.from({ length: 13 }).map((_, i) => (
-       <View
-        key={i}
-      style={[styles.stripe, i % 2 === 0 ? styles.stripeYellow : styles.stripeBlack]}
-    />
-  ))}
-</View>
+          {Array.from({ length: 24 }).map((_, i) => (
+            <View key={i} style={[styles.stripe, i % 2 === 0 ? styles.stripeYellow : styles.stripeBlack]} />
+          ))}
+        </View>
 
         {/* Hero */}
         <View style={styles.hero}>
@@ -61,16 +63,13 @@ export default function LoginScreen({ navigation, setToken, setRole }) {
 
           {/* Bottom stripe */}
           <View style={styles.stripeRow}>
-            {Array.from({ length: 13 }).map((_, i) => (
-              <View
-                key={i}
-                style={[styles.stripe, i % 2 === 0 ? styles.stripeYellow : styles.stripeBlack]}
-              />
+            {Array.from({ length: 24 }).map((_, i) => (
+              <View key={i} style={[styles.stripe, i % 2 === 0 ? styles.stripeYellow : styles.stripeBlack]} />
             ))}
           </View>
         </View>
 
-        {/* Card */}
+        {/* Card — flex: 1 makes it fill remaining space */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Sign In</Text>
           <Text style={styles.cardSubtitle}>Welcome back!</Text>
@@ -84,6 +83,7 @@ export default function LoginScreen({ navigation, setToken, setRole }) {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            returnKeyType="next"
           />
 
           <Text style={styles.label}>Password</Text>
@@ -94,6 +94,8 @@ export default function LoginScreen({ navigation, setToken, setRole }) {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
           />
 
           <TouchableOpacity
@@ -116,12 +118,11 @@ export default function LoginScreen({ navigation, setToken, setRole }) {
               <Text style={styles.registerTextBold}>Register</Text>
             </Text>
           </TouchableOpacity>
+
+          <Text style={styles.footer}>⚠️  Authorised personnel only</Text>
         </View>
 
-        {/* Footer */}
-        <Text style={styles.footer}>⚠️  Authorised personnel only</Text>
-
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   )
 }
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
   },
   hero: {
     backgroundColor: '#1C1C1E',
-    paddingTop: 70,
+    paddingTop: 24,
     paddingBottom: 0,
     alignItems: 'center',
   },
@@ -153,18 +154,19 @@ const styles = StyleSheet.create({
   },
   heroIcon:  { fontSize: 40 },
   appName:   { fontSize: 36, fontWeight: '900', color: '#FFFFFF', letterSpacing: 1, marginBottom: 4 },
-  tagline:   { fontSize: 13, color: '#9CA3AF', letterSpacing: 0.5, marginBottom: 60 },
-  stripeRow: { flexDirection: 'row', width: '100%', height: 10, overflow: 'hidden' },
-  stripe:       { flex: 1, height: 10, transform: [{ skewX: '-20deg' }] },
+  tagline:   { fontSize: 13, color: '#9CA3AF', letterSpacing: 0.5, marginBottom: 24 },
+  stripeRow: { flexDirection: 'row', width: '100%', height: 6, overflow: 'hidden' },
+  stripe:       { flex: 1, height: 6, transform: [{ skewX: '-20deg' }] },
   stripeYellow: { backgroundColor: '#F59E0B' },
   stripeBlack:  { backgroundColor: '#1C1C1E' },
   card: {
-    flex: 1,
+    flex: 1,                      // fills remaining space — no more black gap
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 28,
     paddingTop: 32,
+    paddingBottom: 48,
   },
   cardTitle:    { fontSize: 24, fontWeight: '800', color: '#111827', marginBottom: 4 },
   cardSubtitle: { fontSize: 13, color: '#9CA3AF', marginBottom: 28 },
@@ -194,16 +196,14 @@ const styles = StyleSheet.create({
   },
   btnDisabled:      { opacity: 0.6 },
   btnText:          { color: '#1C1C1E', fontSize: 16, fontWeight: '800', letterSpacing: 0.3 },
-  registerLink:     { alignItems: 'center' },
+  registerLink:     { alignItems: 'center', marginBottom: 32 },
   registerText:     { fontSize: 14, color: '#9CA3AF' },
   registerTextBold: { color: '#F59E0B', fontWeight: '700' },
   footer: {
-    position: 'absolute',
-    bottom: 16,
-    left: 0,
-    right: 0,
-    fontSize: 11,
-    color: '#4B5563',
     textAlign: 'center',
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 'auto',    // pushes footer to bottom of card
+    paddingTop: 16,
   },
 })
