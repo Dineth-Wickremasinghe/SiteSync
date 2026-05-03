@@ -2,7 +2,7 @@ import axios from 'axios'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const api = axios.create({
-  baseURL: 'http://sitesync-backend-ebftd0g8aybxhjbk.eastasia-01.azurewebsites.net/api'
+  baseURL: 'https://sitesync-backend-ebftd0g8aybxhjbk.eastasia-01.azurewebsites.net/api'
 
 })
 
