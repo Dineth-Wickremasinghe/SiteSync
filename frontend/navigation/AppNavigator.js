@@ -7,6 +7,7 @@ import LoginScreen from '../screens/auth/LoginScreen'
 import RegisterScreen from '../screens/auth/RegisterScreen'
 import WorkerListScreen from '../screens/workers/WorkerListScreen'
 import WorkerFormScreen from '../screens/workers/WorkerFormScreen'
+import WorkerDetailScreen from '../screens/workers/WorkerDetailScreen'
 import EquipmentListScreen from '../screens/equipment/EquipmentListScreen'
 import EquipmentFormScreen from '../screens/equipment/EquipmentFormScreen'
 import ProjectListScreen from '../screens/projects/ProjectListScreen'
@@ -79,6 +80,9 @@ function WorkersStack({ token }) {
       </Stack.Screen>
       <Stack.Screen name="WorkerFormScreen" options={{ title: 'Worker Details' }}>
         {props => <WorkerFormScreen {...props} token={token} />}
+      </Stack.Screen>
+      <Stack.Screen name="WorkerDetailScreen" options={{ title: 'Worker Details' }}>
+        {props => <WorkerDetailScreen {...props} token={token} />}
       </Stack.Screen>
     </Stack.Navigator>
   )

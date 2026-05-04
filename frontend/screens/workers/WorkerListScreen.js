@@ -90,6 +90,10 @@ export default function WorkerListScreen({ navigation, token }) {
 
   // ── Render card ───────────────────────────────────────────────────────────
   const renderWorker = ({ item }) => (
+  <TouchableOpacity
+    activeOpacity={0.85}
+    onPress={() => navigation.navigate('WorkerDetailScreen', { worker: item, token })}
+  >
     <View style={common.card}>
       <View style={styles.cardTop}>
         {item.idPhotoUrl ? (
@@ -123,20 +127,26 @@ export default function WorkerListScreen({ navigation, token }) {
       <View style={common.cardActions}>
         <TouchableOpacity
           style={common.editBtn}
-          onPress={() => navigation.navigate('WorkerFormScreen', { worker: item, token })}
+          onPress={(e) => {
+            e.stopPropagation && e.stopPropagation()
+            navigation.navigate('WorkerFormScreen', { worker: item, token })
+          }}
         >
           <Text style={common.editBtnText}>Edit</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={common.deleteBtn}
-          onPress={() => deleteWorker(item._id)}
+          onPress={(e) => {
+            e.stopPropagation && e.stopPropagation()
+            deleteWorker(item._id)
+          }}
         >
           <Text style={common.deleteBtnText}>Delete</Text>
         </TouchableOpacity>
       </View>
     </View>
-  )
-
+  </TouchableOpacity>
+)
   const ListHeader = () => (
     <>
       {/* ── Stats Card ── */}
