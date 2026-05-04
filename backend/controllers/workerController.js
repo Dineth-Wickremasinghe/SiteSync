@@ -86,4 +86,15 @@ const deleteWorker = async (req, res) => {
   }
 }
 
-module.exports = { createWorker, getWorkers, getWorkerById, updateWorker, deleteWorker }
+// @GET /api/workers/me
+const getMyWorkerRecord = async (req, res) => {
+  try {
+    const worker = await Worker.findOne({ userId: req.user.id })
+      .populate('createdBy', 'name email')
+    if (!worker) return res.status(404).json({ message: 'No worker record linked to your account' })
+    res.json(worker)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+module.exports = { createWorker, getWorkers, getWorkerById, updateWorker, deleteWorker, getMyWorkerRecord }

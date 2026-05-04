@@ -7,30 +7,37 @@ Built using React Native (Expo) for the frontend and Node.js + Express.js for th
 
 ---
 
-## Tech Stack
+## Team
 
-| Layer | Technology |
+| Member | Module |
 |---|---|
-| Mobile Frontend | React Native (Expo) |
-| Backend | Node.js + Express.js |
-| Database | MongoDB Atlas |
-| Authentication | JWT + bcryptjs |
-| File Storage | Cloudinary |
-| Hosting | Azure |
+| All members | User Management & Authentication |
+| Member 1 | Worker Management |
+| Member 2 | Project Management |
+| Member 3 | Equipment Management |
+| Member 4 | Daily Site Reports |
+| Member 5 | Incident Management |
+| Member 6 | Notice Board |
 
 ---
 
-## Team & Modules
+## Tech Stack
 
-| Member | Module | Branch |
-|---|---|---|
-| Group | User Authentication & Management | `auth` |
-| Member 1 | Worker Management | `workers` |
-| Member 2 | Project Management | `projects` |
-| Member 3 | Equipment Management | `equipment` |
-| Member 4 | Daily Site Reports | `reports` |
-| Member 5 | Incident Management | `incidents` |
-| Member 6 | Notice Board | `notices` |
+**Frontend**
+- React Native (Expo)
+- React Navigation (Native Stack + Bottom Tabs)
+- Axios
+
+**Backend**
+- Node.js + Express.js
+- MongoDB Atlas
+- Cloudinary (file/image storage)
+- JWT Authentication
+- Multer + multer-storage-cloudinary
+
+**Deployment**
+- Backend: Microsoft Azure App Service
+- Database: MongoDB Atlas
 
 ---
 
@@ -42,250 +49,213 @@ SiteSync/
 │   ├── config/
 │   │   └── db.js
 │   ├── controllers/
-│   │   ├── authController.js
-│   │   ├── equipmentController.js
-│   │   ├── incidentController.js
-│   │   ├── noticeController.js
-│   │   ├── projectController.js
-│   │   ├── reportController.js
-│   │   └── workerController.js
 │   ├── middleware/
 │   │   ├── authMiddleware.js
 │   │   └── uploadMiddleware.js
 │   ├── models/
-│   │   ├── Equipment.js
-│   │   ├── Notice.js
-│   │   ├── Project.js
-│   │   ├── Report.js
-│   │   ├── User.js
-│   │   ├── Worker.js
-│   │   └── incident.js
 │   ├── routes/
-│   │   ├── authRoutes.js
-│   │   ├── equipmentRoutes.js
-│   │   ├── incidentRoutes.js
-│   │   ├── noticeRoutes.js
-│   │   ├── projectRoutes.js
-│   │   ├── reportRoutes.js
-│   │   └── workerRoutes.js
 │   ├── server.js
-│   └── .env
+│   └── package.json
 └── frontend/
     ├── navigation/
     │   └── AppNavigator.js
     ├── screens/
     │   ├── auth/
-    │   │   ├── LoginScreen.js
-    │   │   └── RegisterScreen.js
+    │   ├── workers/
+    │   ├── projects/
     │   ├── equipment/
     │   │   ├── EquipmentFormScreen.js
     │   │   └── EquipmentListScreen.js
     │   ├── incidents/
-    │   │   ├── IncidentFormScreen.js
-    │   │   └── IncidentListScreen.js
     │   ├── notices/
-    │   │   ├── NoticeFormScreen.js
-    │   │   └── NoticeListScreen.js
-    │   ├── projects/
-    │   │   ├── ProjectDetailScreen.js
-    │   │   ├── ProjectFormScreen.js
-    │   │   └── ProjectListScreen.js
-    │   ├── reports/
-    │   │   ├── ReportFormScreen.js
-    │   │   └── ReportListScreen.js
-    │   ├── workers/
-    │   │   ├── WorkerFormScreen.js
-    │   │   └── WorkerListScreen.js
     │   └── ProfileScreen.js
     ├── services/
     │   └── api.js
-    └── App.js
-
+    ├── App.js
+    └── package.json
 ```
 
 ---
 
-## Getting Started
-GitHub Repository: https://github.com/Dineth-Wickremasinghe/SiteSync
-Backend URL: sitesync-backend-ebftd0g8aybxhjbk.eastasia-01.azurewebsites.net
+## Modules
 
-### Prerequisites
+### Authentication
+- Register and login with JWT tokens
+- Passwords hashed with bcrypt
+- Role-based access: Admin, Supervisor, Worker
+- `protect` middleware verifies JWT on protected routes
+- `authorizeRoles` middleware checks user role
 
-- Node.js (LTS version)
-- Expo Go app on your phone
-- MongoDB Atlas account
-- Cloudinary account
+### Worker Management
+- Full CRUD for site workers
+- Fields: name, phone, trade, status, ID photo
+- Trades: Mason, Electrician, Plumber, General
+- Status: Active / Inactive
 
-### 1. Clone the repository
+### Project Management
+- Full CRUD for construction projects
+- Fields: project name, location, client name, status, blueprint image
+- Status: Active / On Hold / Completed
+- Shows creator name via `populate('createdBy')`
+- Detail screen with full project info
 
-```bash
-git clone https://github.com/Dineth-Wickremasinghe/SiteSync.git
-cd SiteSync
-```
+### Equipment Management
+- Full CRUD for site equipment
+- Fields: name, type, condition, quantity, equipment image
+- Types: Heavy / Tool / Material
+- Condition: Good / Fair / Poor
 
-### 2. Backend setup
+### Daily Site Reports
+- Full CRUD for daily reports
+- Fields: project name, report date, work done, worker count, report photo
 
-```bash
-cd backend
-npm install
-```
+### Incident Management
+- Full CRUD for site incidents
+- Fields: title, description, severity, status, incident photo
+- Severity: Low / Medium / High
+- Status: Open / Resolved
 
-Create a `.env` file inside the `backend` folder:
-
-```
-MONGO_URI=your_mongodb_atlas_connection_string
-JWT_SECRET=your_jwt_secret_key
-CLOUDINARY_NAME=your_cloudinary_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-PORT=5000
-```
-
-Start the backend:
-
-```bash
-npm run dev
-```
-
-You should see:
-```
-Server running on port 5000
-MongoDB connected: ...
-```
-
-### 3. Frontend setup
-
-```bash
-cd frontend
-npm install
-```
-
-Open `frontend/services/api.js` and update the base URL with your computer's local IP address:
-
-```javascript
-const api = axios.create({
-  baseURL: 'http://YOUR_LOCAL_IP:5000/api'
-})
-```
-
-To find your IP on Windows run `ipconfig` and look for IPv4 Address under Wi-Fi.
-
-Start the frontend:
-
-```bash
-npx expo start
-```
-
-Scan the QR code with **Expo Go** on your phone.
+### Notice Board
+- Full CRUD for site notices
+- Fields: title, message, category, posted by, notice image
+- Categories: Safety / Schedule / General
 
 ---
 
 ## API Endpoints
 
-### Authentication
-| Method | Endpoint | Protected | Description |
-|---|---|---|---|
-| POST | /api/auth/register | No | Register new user |
-| POST | /api/auth/login | No | Login and get JWT token |
-| GET | /api/auth/profile | Yes | Get own profile |
-| PUT | /api/auth/profile | Yes | Update own profile |
+All routes are prefixed with `/api`.
 
-### Workers
-| Method | Endpoint | Protected | Description |
+| Method | Endpoint | Description | Auth |
 |---|---|---|---|
-| POST | /api/workers | Yes | Add worker |
-| GET | /api/workers | Yes | Get all workers |
-| GET | /api/workers/:id | Yes | Get one worker |
-| PUT | /api/workers/:id | Yes | Update worker |
-| DELETE | /api/workers/:id | Yes | Delete worker |
-
-### Projects
-| Method | Endpoint | Protected | Description |
-|---|---|---|---|
-| POST | /api/projects | Yes | Create project |
-| GET | /api/projects | Yes | Get all projects |
-| GET | /api/projects/:id | Yes | Get one project |
-| PUT | /api/projects/:id | Yes | Update project |
-| DELETE | /api/projects/:id | Yes | Delete project |
-
-### Equipment
-| Method | Endpoint | Protected | Description |
-|---|---|---|---|
-| POST | /api/equipment | Yes | Add equipment |
-| GET | /api/equipment | Yes | Get all equipment |
-| GET | /api/equipment/:id | Yes | Get one item |
-| PUT | /api/equipment/:id | Yes | Update item |
-| DELETE | /api/equipment/:id | Yes | Delete item |
-
-### Reports
-| Method | Endpoint | Protected | Description |
-|---|---|---|---|
-| POST | /api/reports | Yes | Submit report |
-| GET | /api/reports | Yes | Get all reports |
-| GET | /api/reports/:id | Yes | Get one report |
-| PUT | /api/reports/:id | Yes | Update report |
-| DELETE | /api/reports/:id | Yes | Delete report |
-
-### Incidents
-| Method | Endpoint | Protected | Description |
-|---|---|---|---|
-| POST | /api/incidents | Yes | Report incident |
-| GET | /api/incidents | Yes | Get all incidents |
-| GET | /api/incidents/:id | Yes | Get one incident |
-| PUT | /api/incidents/:id | Yes | Update incident |
-| DELETE | /api/incidents/:id | Yes | Delete incident |
-
-### Notices
-| Method | Endpoint | Protected | Description |
-|---|---|---|---|
-| POST | /api/notices | Yes | Post notice |
-| GET | /api/notices | Yes | Get all notices |
-| GET | /api/notices/:id | Yes | Get one notice |
-| PUT | /api/notices/:id | Yes | Update notice |
-| DELETE | /api/notices/:id | Yes | Delete notice |
+| POST | `/auth/register` | Register new user | No |
+| POST | `/auth/login` | Login and get token | No |
+| GET | `/auth/profile` | Get current user profile | Yes |
+| GET | `/workers` | Get all workers | Yes |
+| POST | `/workers` | Add new worker | Yes |
+| PUT | `/workers/:id` | Update worker | Yes |
+| DELETE | `/workers/:id` | Delete worker | Yes |
+| GET | `/projects` | Get all projects | Yes |
+| POST | `/projects` | Create project | Yes |
+| GET | `/projects/:id` | Get project by ID | Yes |
+| PUT | `/projects/:id` | Update project | Yes |
+| DELETE | `/projects/:id` | Delete project | Yes |
+| GET | `/equipment` | Get all equipment | Yes |
+| POST | `/equipment` | Add equipment | Yes |
+| PUT | `/equipment/:id` | Update equipment | Yes |
+| DELETE | `/equipment/:id` | Delete equipment | Yes |
+| GET | `/reports` | Get all reports | Yes |
+| POST | `/reports` | Create report | Yes |
+| PUT | `/reports/:id` | Update report | Yes |
+| DELETE | `/reports/:id` | Delete report | Yes |
+| GET | `/incidents` | Get all incidents | Yes |
+| POST | `/incidents` | Report incident | Yes |
+| PUT | `/incidents/:id` | Update incident | Yes |
+| DELETE | `/incidents/:id` | Delete incident | Yes |
+| GET | `/notices` | Get all notices | Yes |
+| POST | `/notices` | Post notice | Yes |
+| PUT | `/notices/:id` | Update notice | Yes |
+| DELETE | `/notices/:id` | Delete notice | Yes |
 
 ---
 
-## User Roles
+## Getting Started
+GitHub Repository: https://github.com/Dineth-Wickremasinghe/SiteSync
 
-| Role | Access |
-|---|---|
-| Supervisor | Full access to all modules |
-| Worker | View only on most modules |
 
----
+### Prerequisites
+- Node.js 22+
+- Expo CLI
+- MongoDB Atlas account
+- Cloudinary account
 
-## Git Workflow
+### Backend Setup
 
-Each member works on their own branch and never pushes directly to `main`.
-
+1. Clone the repository
 ```bash
-# Switch to your branch
-git checkout workers
-
-# After making changes
-git add .
-git commit -m "your message here"
-git push origin workers
+git clone https://github.com/your-username/SiteSync.git
+cd SiteSync/backend
 ```
 
-Only merge to `main` at the end of each week after testing.
+2. Install dependencies
+```bash
+npm install
+```
+
+3. Create a `.env` file in the `backend` folder
+```
+MONGODB_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_jwt_secret
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+PORT=5000
+```
+
+4. Start the backend server
+```bash
+npm start
+```
+
+The server runs on `http://localhost:5000`
+
+### Frontend Setup
+
+1. Navigate to the frontend folder
+```bash
+cd SiteSync/frontend
+```
+
+2. Install dependencies
+```bash
+npm install
+```
+
+3. Update the base URL in `services/api.js`
+```javascript
+baseURL: 'http://YOUR_LOCAL_IP:5000/api'
+```
+> Use your machine's local IP address (e.g. `192.168.1.x`), not `localhost`, so the app can connect from a physical device or emulator.
+
+4. Start Expo
+```bash
+npx expo start
+```
 
 ---
 
 ## Environment Variables
 
-| Variable | Description |
-|---|---|
-| MONGO_URI | MongoDB Atlas connection string |
-| JWT_SECRET | Secret key for JWT token signing |
-| CLOUDINARY_NAME | Cloudinary cloud name |
-| CLOUDINARY_API_KEY | Cloudinary API key |
-| CLOUDINARY_API_SECRET | Cloudinary API secret |
-| PORT | Backend port (default 5000) |
+Never commit your `.env` file to GitHub. Each team member must create their own `.env` file locally using the variables listed above.
 
-Never commit the `.env` file to GitHub. It is listed in `.gitignore`.
+If you are connecting from a different machine, make sure your IP address is whitelisted in MongoDB Atlas under **Network Access**. For development, setting it to `0.0.0.0/0` (Allow Access from Anywhere) is recommended.
 
 ---
 
+## Branches
 
+| Branch | Purpose |
+|---|---|
+| `main` | Stable integrated code |
+| `auth` | Authentication module |
+| `workers` | Worker management module |
+| `projects` | Project management module |
+| `equipment` | Equipment management module |
+| `reports` | Daily site reports module |
+| `incidents` | Incident management module |
+| `notices` | Notice board module |
+
+---
+
+## Deployment
+
+The backend is deployed on **Microsoft Azure App Service**.
+
+Live API base URL:
+```
+https://your-azure-app.azurewebsites.net/api
+```
+
+Deployments are triggered automatically via GitHub Actions on every push to the `main` branch.
+
+---
