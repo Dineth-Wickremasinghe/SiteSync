@@ -5,15 +5,22 @@ const {
   getProjects,
   getProjectById,
   updateProject,
-  deleteProject
+  deleteProject,
+  getProjectStats,
+  searchProjects,
+  getProjectsByStatus
 } = require('../controllers/projectController')
 const { protect } = require('../middleware/authMiddleware')
 const upload = require('../middleware/uploadMiddleware')
 
-router.post('/',      protect, upload.single('blueprintImage'), createProject)
-router.get('/',       protect, getProjects)
-router.get('/:id',    protect, getProjectById)
-router.put('/:id',    protect, upload.single('blueprintImage'), updateProject)
+// Existing routes
+router.post('/', protect, upload.single('blueprintImage'), createProject)
+router.get('/', protect, getProjects)
+router.get('/stats', protect, getProjectStats)
+router.get('/search', protect, searchProjects)
+router.get('/status/:status', protect, getProjectsByStatus)
+router.get('/:id', protect, getProjectById)
+router.put('/:id', protect, upload.single('blueprintImage'), updateProject)
 router.delete('/:id', protect, deleteProject)
 
 module.exports = router
