@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, Alert, ActivityIndicator, ScrollView, Image
@@ -26,6 +26,59 @@ export default function ReportFormScreen({ navigation, route }) {
   const [pickerYear,  setPickerYear]  = useState(today.substring(0, 4))
   const [pickerMonth, setPickerMonth] = useState(today.substring(5, 7))
   const [pickerDay,   setPickerDay]   = useState(today.substring(8, 10))
+
+  // ── Project picker state ──
+  // Holds the full list of projects fetched from the backend
+  const [projects,          setProjects]          = useState([])
+  const [projectsLoading,   setProjectsLoading]   = useState(false)
+  // Controls whether the dropdown list is visible
+  const [showProjectPicker, setShowProjectPicker] = useState(false)
+  // Text typed in the search box inside the dropdown
+  const [projectSearch,     setProjectSearch]     = useState('')
+
+  // ── Fetch existing projects on mount so the user can pick one ──
+  // Uses GET /api/projects which is already available in the backend.
+  // Only "Active" and "On Hold" projects are shown — completed ones
+  // shouldn't normally need new daily reports.
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setProjectsLoading(true)
+        const res = await api.get('/projects', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        // NOTE: GET /api/projects returns { projects: [...], pagination: {...} }
+        // not a plain array — so we must read res.data.projects here.
+        // We also keep a fallback to res.data in case the API shape ever changes.
+        // Then filter to only Active / On Hold — completed projects don't need new reports.
+        const allProjects = res.data.projects || res.data
+        const ongoing = allProjects.filter(
+          p => p.status === 'Active' || p.status === 'On Hold'
+        )
+        setProjects(ongoing)
+      } catch (err) {
+        // Non-fatal — the user can still type a project name manually
+        console.warn('Could not load projects list:', err.message)
+      } finally {
+        setProjectsLoading(false)
+      }
+    }
+    fetchProjects()
+  }, [token])
+
+  // ── Projects filtered by the search text typed inside the dropdown ──
+  const filteredProjects = projects.filter(p =>
+    p.projectName.toLowerCase().includes(projectSearch.toLowerCase())
+  )
+
+  // ── Called when the user taps a project row in the dropdown ──
+  const selectProject = (p) => {
+    setProjectName(p.projectName)
+    setShowProjectPicker(false)
+    setProjectSearch('')
+    // Clear any validation error on project name
+    if (errors.projectName) setErrors(e => ({ ...e, projectName: '' }))
+  }
 
   const applyDate = () => {
     const built = `${pickerYear}-${pickerMonth.padStart(2,'0')}-${pickerDay.padStart(2,'0')}`
@@ -114,21 +167,128 @@ export default function ReportFormScreen({ navigation, route }) {
         {editing ? 'Edit Report' : 'Add Daily Report'}
       </Text>
 
-      {/* ── Project Name ── */}
+      {/* ── Project Name — dropdown picker for existing projects ── */}
       <Text style={typography.label}>
         Project Name <Text style={{ color: colors.danger }}>*</Text>
       </Text>
-      <TextInput
-        style={[common.input, errors.projectName && common.inputError]}
-        value={projectName}
-        onChangeText={t => {
-          setProjectName(t)
-          if (errors.projectName) setErrors(e => ({ ...e, projectName: '' }))
+
+      {/* Tappable field that opens the dropdown */}
+      <TouchableOpacity
+        style={[styles.pickerTrigger, errors.projectName && common.inputError]}
+        onPress={() => {
+          setShowProjectPicker(v => !v)
+          setProjectSearch('')
         }}
-        placeholder="e.g. City Mall Construction"
-        placeholderTextColor={colors.textLight}
-      />
-      {errors.projectName ? <Text style={typography.errorText}>{errors.projectName}</Text> : null}
+        activeOpacity={0.8}
+      >
+        <Text style={[
+          styles.pickerTriggerText,
+          !projectName && { color: colors.textLight }
+        ]}>
+          {projectName || 'Select or type a project name…'}
+        </Text>
+        {/* Show a loading spinner while the projects list is being fetched */}
+        {projectsLoading
+          ? <ActivityIndicator size="small" color={colors.primary} />
+          : <Text style={styles.pickerArrow}>{showProjectPicker ? '▲' : '▼'}</Text>
+        }
+      </TouchableOpacity>
+      {errors.projectName
+        ? <Text style={typography.errorText}>{errors.projectName}</Text>
+        : null
+      }
+
+      {/* ── Dropdown panel: project list + search filter ── */}
+      {showProjectPicker && (
+        <View style={styles.dropdownPanel}>
+          {/* Search box to filter the project list */}
+          <TextInput
+            style={styles.dropdownSearch}
+            value={projectSearch}
+            onChangeText={setProjectSearch}
+            placeholder="Search projects…"
+            placeholderTextColor={colors.textLight}
+            autoFocus
+          />
+          {filteredProjects.length === 0 ? (
+            <Text style={styles.dropdownEmpty}>
+              {projects.length === 0
+                ? 'No ongoing projects found.'
+                : 'No projects match your search.'
+              }
+            </Text>
+          ) : (
+            // Using ScrollView + map instead of FlatList to avoid the
+            // "VirtualizedList nested inside ScrollView" warning — the list
+            // is small so virtualization isn't needed here.
+            <ScrollView
+              style={styles.dropdownList}
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled={true}
+            >
+              {filteredProjects.map((item, index) => (
+                <View key={item._id}>
+                  <TouchableOpacity
+                    style={[
+                      styles.dropdownItem,
+                      // Highlight the currently selected project
+                      item.projectName === projectName && styles.dropdownItemSelected
+                    ]}
+                    onPress={() => selectProject(item)}
+                  >
+                    {/* Project name */}
+                    <Text style={[
+                      styles.dropdownItemName,
+                      item.projectName === projectName && styles.dropdownItemNameSelected
+                    ]}>
+                      {item.projectName}
+                    </Text>
+                    {/* Status badge (Active / On Hold) */}
+                    <View style={[
+                      styles.statusBadge,
+                      item.status === 'On Hold' && styles.statusBadgeHold
+                    ]}>
+                      <Text style={styles.statusBadgeText}>{item.status}</Text>
+                    </View>
+                  </TouchableOpacity>
+                  {/* Separator between rows */}
+                  {index < filteredProjects.length - 1 && (
+                    <View style={styles.dropdownSeparator} />
+                  )}
+                </View>
+              ))}
+            </ScrollView>
+          )}
+
+          {/* Allow the user to type a custom name not in the list */}
+          {projectSearch.trim().length > 0 &&
+            !filteredProjects.some(
+              p => p.projectName.toLowerCase() === projectSearch.trim().toLowerCase()
+            ) && (
+            <TouchableOpacity
+              style={styles.dropdownCustomRow}
+              onPress={() => {
+                setProjectName(projectSearch.trim())
+                setShowProjectPicker(false)
+                setProjectSearch('')
+                if (errors.projectName) setErrors(e => ({ ...e, projectName: '' }))
+              }}
+            >
+              <Text style={styles.dropdownCustomText}>
+                ✏️  Use "{projectSearch.trim()}"
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Close button */}
+          <TouchableOpacity
+            style={styles.dropdownCloseBtn}
+            onPress={() => { setShowProjectPicker(false); setProjectSearch('') }}
+          >
+            <Text style={styles.dropdownCloseText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* ── Report Date picker ── */}
       <Text style={typography.label}>
@@ -290,6 +450,129 @@ export default function ReportFormScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
+  // ── Project picker trigger button ──
+  // Looks similar to a text input but opens a dropdown on tap
+  pickerTrigger: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: colors.inputBg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+    minHeight: 48,
+  },
+  pickerTriggerText: {
+    fontSize: 15,
+    color: colors.textDark,
+    flex: 1,
+  },
+  pickerArrow: {
+    fontSize: 12,
+    color: colors.textLight,
+    marginLeft: 8,
+  },
+
+  // ── Dropdown panel that appears below the trigger ──
+  dropdownPanel: {
+    backgroundColor: colors.card,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  // Search input inside the dropdown
+  dropdownSearch: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    padding: 10,
+    color: colors.textDark,
+    fontSize: 14,
+    backgroundColor: colors.inputBg,
+  },
+  // Scrollable list of project rows — height caps at ~4 rows
+  dropdownList: {
+    maxHeight: 200,
+  },
+  // Single project row
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  // Highlighted row for the currently selected project
+  dropdownItemSelected: {
+    backgroundColor: '#FEF3C722',
+  },
+  dropdownItemName: {
+    fontSize: 14,
+    color: colors.textDark,
+    flex: 1,
+  },
+  dropdownItemNameSelected: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  // Thin separator line between rows
+  dropdownSeparator: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginHorizontal: 14,
+  },
+  // Shown when no projects match the search
+  dropdownEmpty: {
+    padding: 16,
+    color: colors.textMuted,
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  // "Use <typed text>" row for custom project names not in the list
+  dropdownCustomRow: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    padding: 12,
+    backgroundColor: colors.inputBg,
+  },
+  dropdownCustomText: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  // Close button at the bottom of the dropdown
+  dropdownCloseBtn: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    padding: 10,
+    alignItems: 'center',
+  },
+  dropdownCloseText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // ── Status badge shown next to each project name ──
+  statusBadge: {
+    backgroundColor: '#14532d',  // dark green for Active
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    marginLeft: 8,
+  },
+  statusBadgeHold: {
+    backgroundColor: '#451A03',  // dark amber for On Hold
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    color: colors.textDark,
+    fontWeight: '700',
+  },
+
   datePicker: {
     borderWidth: 1,
     borderColor: colors.border,
